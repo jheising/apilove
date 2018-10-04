@@ -38,8 +38,7 @@ export class APIConfig {
     @EnvVarSync
     static KV_STORAGE_SERVICE_PROVIDER: "MemoryKVService" | "DynamoDBKVStorage" = "MemoryKVService";
 
+    // The table name to use when storing key-value data in DynamoDB
     @EnvVarSync
     static DYNAMO_KV_STORAGE_TABLE_NAME: string;
-
-    // TODO: Load any other config params or secrets here
 }

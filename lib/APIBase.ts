@@ -1,5 +1,5 @@
 import * as express from "express";
-import {defaults, get, set, isNil, each, map, toString, toNumber, isArray, isString, isNaN} from "lodash";
+import {defaults, get, set, isNil, each, map, toString, toNumber, isArray, castArray, isString, isNaN} from "lodash";
 import "reflect-metadata";
 import {Utils} from "./Utils";
 import {APIConfig} from "./APIConfig";
@@ -21,6 +21,7 @@ interface HandlerData {
 export type APIParameterSource = "param" | "query" | "body" | "cookie" | "header" | "any";
 
 export interface APIParameterOptions {
+    default?: any;
     optional?: boolean;
     validator?: (value: any) => boolean;
     sources?: APIParameterSource | APIParameterSource[];
@@ -35,9 +36,14 @@ export function APIParameter(options?: APIParameterOptions) {
     }
 }
 
-export interface APIEndpointOptions {
-    method?: string; // Defaults to GET
-    path?: string; // Defaults to /
+interface APIEndpointOptions {
+    // The method to be used when requesting this endpoint. Defaults to "get".
+    method?: string;
+
+    // The path to reach this endpoint. Defaults to "/".
+    path?: string;
+
+    // Any express.js middleware functions you want to be executed before invoking this method. Useful for things like authentication.
     middleware?: Function[];
 }
 
@@ -144,9 +150,29 @@ export class APIResponse {
     req;
     res;
 
-    constructor(req, res) {
+    constructor(req?, res?) {
         this.req = req;
         this.res = res;
+    }
+
+    processHandlerFunction(target:any, handlerFunction:Function, handlerArgs:any[] = [])
+    {
+        // Add the req, and res to the end arguments if the function wants it
+        handlerArgs = handlerArgs.concat([this.req, this.res]);
+
+        let handlerPromise = handlerFunction.apply(target, handlerArgs);
+        if(!(handlerPromise instanceof Promise))
+        {
+            throw new Error(`API function named '${handlerFunction.name}' doesn't return a promise.`);
+        }
+        else
+        {
+            handlerPromise.then((data:any) => {
+                this.withSuccess(data)
+            }).catch((error:any) => {
+                this.withError(error);
+            });
+        }
     }
 
     withError(error: any, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
@@ -169,7 +195,6 @@ export class APIResponse {
         }
 
         this.res.status(apiError.statusCode).send(hapiOutput ? apiError.hapiOut() : apiError.out());
-        return true;
     }
 
     withSuccess(data?: any, statusCode: number = 200, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
@@ -203,16 +228,13 @@ export class APIBase {
                 let paramData: HandlerParameterData = handlerData.handlerParameterData[index];
                 let paramName = get(paramData, "paramOptions.rawName", handlerData.handlerParameterNames[index]);
 
-                if (paramData.paramType === "APIResponse") {
+                // Ignore request and response parameters if the function asks for it
+                if ((index === handlerData.handlerParameterNames.length - 1 || index === handlerData.handlerParameterNames.length - 2) && ["req", "request", "res", "response"].indexOf(paramName.toLowerCase()) >= 0) {
                     continue;
                 }
 
-                let paramSources: APIParameterSource[] = get(paramData, "paramOptions.sources", ["any"]);
+                let paramSources: APIParameterSource[] = castArray(get(paramData, "paramOptions.sources", ["any"]));
                 let paramValues = [];
-
-                if (!isArray(paramSources)) {
-                    paramSources = [(paramSources as any)];
-                }
 
                 for (let paramSource of paramSources) {
                     if (paramSource === "param" || paramSource === "any") {
@@ -231,6 +253,9 @@ export class APIBase {
                         paramValues.push(req.get(paramName));
                     }
                 }
+
+                // Add a default value to the possible options
+                paramValues.push(paramData.paramOptions.default);
 
                 let argValue = Utils.coalesce.apply(Utils, paramValues);
 
@@ -286,8 +311,7 @@ export class APIBase {
                 return;
             }
 
-            handlerArgs.push(apiResponse);
-            handlerData.handlerFunction.apply(this, handlerArgs);
+            apiResponse.processHandlerFunction(this, handlerData.handlerFunction, handlerArgs);
         };
     }
 

@@ -1,4 +1,5 @@
-import {isBoolean, isNil, toString} from "lodash";
+import {isBoolean, isNil, toString, castArray} from "lodash";
+import * as getArguments from "function-arguments";
 
 export class Utils {
 
@@ -16,6 +17,11 @@ export class Utils {
             case "Boolean":
             {
                 convertedValue = Utils.toBoolean(value);
+                break;
+            }
+            case "Array":
+            {
+                convertedValue = castArray(value);
                 break;
             }
             default:
@@ -48,24 +54,8 @@ export class Utils {
         return null;
     }
 
-    private static FN_ARGS = /^function\s*[^\(]*\(\s*([^\)]*)\)/m;
-    private static FN_ARG_SPLIT = /,/;
-    private static FN_ARG = /^\s*(_?)(.+?)\1\s*$/;
-    private static STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
     static getFunctionParamNames(fn:Function):string[]
     {
-        let paramNames = [];
-        let fnText = fn.toString().replace(this.STRIP_COMMENTS, '');
-        let argDecl = fnText.match(this.FN_ARGS);
-
-        for(let arg of argDecl[1].split(this.FN_ARG_SPLIT))
-        {
-            // @ts-ignore
-            arg.replace(this.FN_ARG, function(all, underscore, name){
-                paramNames.push(name);
-            });
-        }
-
-        return paramNames;
+        return getArguments(fn);
     }
 }

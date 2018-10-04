@@ -1,6 +1,7 @@
 {
   "name": "apilove",
   "version": "1.0.0",
+  "engines" : { "node" : ">=v6.10" },
   "description": "A no-nonsense framework for creating server(less) APIs in TypeScript — api♥︎",
   "main": "APILove.js",
   "types": "APILove.d.ts",
@@ -21,12 +22,10 @@
   "dependencies": {
     "aws-sdk": "^2.327.0",
     "express": "^4.16.3",
+    "function-arguments": "^1.0.8",
     "is-lambda": "^1.0.1",
     "lodash": "^4.17.11",
     "serverless-http": "^1.6.0",
     "shortid": "^2.2.13"
-  },
-  "bin": {
-    "apilove": "./scripts/cli.js"
   }
 }
