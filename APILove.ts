@@ -6,11 +6,15 @@ import {APIConfig} from "./lib/APIConfig";
 import * as path from "path";
 import {Utils} from "./lib/Utils";
 
+export interface APILoveDeploymentConfig {
+    serviceName: string;
+    awsRegion: string;
+}
+
 export type APILoaderDefinition = { apiPath?: string, require: string, className?: string };
 
 export interface APILoveOptions {
-    serviceName: string;
-    apis: APILoaderDefinition[];
+    apis?: APILoaderDefinition[];
     middlewear?: [];
 }
 
@@ -39,6 +43,7 @@ export class APILove {
     }
 
     static start(options: APILoveOptions) {
+
         const app = express();
 
         app.use(bodyParser.json());

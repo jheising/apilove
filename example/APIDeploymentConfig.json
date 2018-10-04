@@ -1,0 +1,5 @@
+{
+  "SERVICE_NAME": "my-api-service",
+  "AWS_REGION": "us-east-1",
+  "API_HANDLER": "APIHandler.handler"
+}

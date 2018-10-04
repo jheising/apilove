@@ -1,4 +1,4 @@
-import {APIBase, APIEndpoint, APIResponse, APIParameter, APILove} from "../APILove";
+import {APIBase, APIEndpoint, APIResponse, APIParameter} from "../APILove";
 import * as fs from "fs";
 
 export class SampleAPI extends APIBase {
@@ -38,12 +38,3 @@ export class SampleAPI extends APIBase {
         });
     }
 }
-
-module.exports.hanlder = APILove.start({
-    serviceName: "SampleAPI",
-    apis:[
-        {
-            require: "./SampleAPI"
-        }
-    ]
-});

@@ -1,11 +1,14 @@
+export interface APILoveDeploymentConfig {
+    serviceName: string;
+    awsRegion: string;
+}
 export declare type APILoaderDefinition = {
     apiPath?: string;
     require: string;
     className?: string;
 };
 export interface APILoveOptions {
-    serviceName: string;
-    apis: APILoaderDefinition[];
+    apis?: APILoaderDefinition[];
     middlewear?: [];
 }
 export declare class APILove {

@@ -1,0 +1,71 @@
+service: ${file(APIDeploymentConfig.json):SERVICE_NAME, "my-api-service"}
+
+custom:
+  NODE_ENV:
+    dev: development
+    prod: production
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: ${opt:stage, "dev"}
+  region: ${file(APIDeploymentConfig.json):AWS_REGION, "us-east-1"}
+  apiName: ${self:service}-api
+  profile: ${opt:profile, 'default'}
+  memorySize: 512
+  timeout: 30
+  logRetentionInDays: 14
+  environment:
+    NODE_ENV: ${self:custom.NODE_ENV.${opt:stage, self:provider.stage}}
+# Uncomment if you want DynamoDB support for key-value storage
+#    KV_STORAGE_SERVICE_PROVIDER: "DynamoDBKVStorage"
+#    DYNAMO_KV_STORAGE_TABLE_NAME: ${self:service}-kv-storage
+#  iamRoleStatements:
+#  - Effect: "Allow"
+#    Action:
+#    - dynamodb:DeleteItem
+#    - dynamodb:GetItem
+#    - dynamodb:PutItem
+#    - dynamodb:UpdateItem
+#    Resource:
+#      Fn::GetAtt:
+#      - kvStorageTable
+#      - Arn
+
+package:
+  exclude:
+    - readme.md
+    - node_modules/@types/**
+    - .git
+    - .secrets*
+    - "*.ts"
+    - "*.js.map"
+
+functions:
+  API:
+    handler: ${file(APIDeploymentConfig.json):API_HANDLER, "APIHandler.handler"}
+    events:
+    - http: ANY /
+    - http: "ANY {proxy+}"
+
+# Uncomment if you want DynamoDB support for key-value storage
+#resources:
+#  Resources:
+#    kvStorageTable:
+#      Type: AWS::DynamoDB::Table
+#      Properties:
+#        TableName: ${self:provider.environment.DYNAMO_KV_STORAGE_TABLE_NAME}
+#        AttributeDefinitions:
+#        - AttributeName: key
+#          AttributeType: S
+#        KeySchema:
+#        - AttributeName: key
+#          KeyType: HASH
+#        ProvisionedThroughput:
+#          ReadCapacityUnits: 5
+#          WriteCapacityUnits: 5
+#        SSESpecification:
+#          SSEEnabled: true
+#        TimeToLiveSpecification:
+#          AttributeName: expires
+#          Enabled: true
