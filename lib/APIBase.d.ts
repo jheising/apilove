@@ -7,7 +7,7 @@ export declare type APIParameterSource = "param" | // Parameters in the URL, lik
 "any";
 export interface APIParameterOptions {
     optional?: boolean;
-    default?: any;
+    defaultValue?: any;
     processor?: (value: any, req?: any) => any;
     sources?: APIParameterSource | APIParameterSource[];
     rawName?: string;

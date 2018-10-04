@@ -32,7 +32,7 @@ export interface APIParameterOptions {
     optional?: boolean;
 
     // A default value to be used if one can't be found. This would be an equivalent shortcut for setting optional=true and providing a default value for your method property
-    default?: any;
+    defaultValue?: any;
 
     // A synchronous function that can be used to transform an incoming parameter into something else. Can also be used as validation by throwing an error.
     // You also get access to the raw express.js req object if you want it.
@@ -279,7 +279,7 @@ export class APIBase {
                 }
 
                 // Add a default value to the possible options
-                paramValues.push(paramOptions.default);
+                paramValues.push(paramOptions.defaultValue);
 
                 let argValue = Utils.coalesce.apply(Utils, paramValues);
 

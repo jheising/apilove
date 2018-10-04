@@ -6,16 +6,15 @@ import {APIConfig} from "./lib/APIConfig";
 import * as path from "path";
 import {Utils} from "./lib/Utils";
 
-export interface APILoveDeploymentConfig {
-    serviceName: string;
-    awsRegion: string;
+export interface APILoaderDefinition {
+    apiPath?: string;
+    require: string;
+    moduleName?: string;
 }
-
-export type APILoaderDefinition = { apiPath?: string, require: string, className?: string };
 
 export interface APILoveOptions {
     apis?: APILoaderDefinition[];
-    middlewear?: [];
+    middleware?: [];
 }
 
 export class APILove {
@@ -35,9 +34,9 @@ export class APILove {
             return null;
         }
 
-        let className = Utils.coalesce(api.className, path.basename(api.require));
+        let moduleName = Utils.coalesce(api.moduleName, path.basename(api.require));
 
-        let apiClass = Utils.coalesce(apiModule[className], apiModule.default, apiModule);
+        let apiClass = Utils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
 
         return new apiClass();
     }
@@ -50,7 +49,7 @@ export class APILove {
         app.use(bodyParser.urlencoded({extended: false}));
         app.use(bodyParser.text());
 
-        for (let mw of get(options, "middlewear", [])) {
+        for (let mw of get(options, "middleware", [])) {
             app.use(mw);
         }
 
@@ -101,6 +100,7 @@ export class APILove {
 
         if (APIConfig.RUN_AS_SERVER) {
             app.listen(APIConfig.WEB_PORT, () => console.log(`API listening on port ${APIConfig.WEB_PORT}`));
+            return app;
         }
         else {
             let serverless = require("serverless-http");
