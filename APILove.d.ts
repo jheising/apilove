@@ -5,7 +5,7 @@ export interface APILoaderDefinition {
 }
 export interface APILoveOptions {
     apis?: APILoaderDefinition[];
-    middleware?: [];
+    middleware?: any[];
 }
 export declare class APILove {
     private static _loadAPI;

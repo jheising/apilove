@@ -1,11 +1,17 @@
 {
   "name": "apilove",
-  "version": "1.0.0",
+  "version": "0.1.3",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/jheising/apilove"
+  },
   "engines" : { "node" : ">=v6.10" },
   "description": "A no-nonsense framework for creating server(less) APIs in TypeScript — api♥︎",
   "main": "APILove.js",
   "types": "APILove.d.ts",
-  "scripts": {},
+  "scripts": {
+    "build": "tsc -p ./"
+  },
   "keywords": [
     "lambda",
     "serverless",
