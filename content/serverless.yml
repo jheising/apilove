@@ -1,0 +1,35 @@
+service: ${file(APIDeployConfig.json):SERVICE_NAME}
+
+custom:
+  NODE_ENV:
+    dev: development
+    prod: production
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: ${opt:stage, 'dev'}
+  region: ${file(APIDeployConfig.json):AWS_REGION}
+  apiName: ${self:service}-api
+  profile: ${opt:profile, 'default'}
+  memorySize: 512
+  timeout: 30
+  logRetentionInDays: 14
+  environment:
+    NODE_ENV: ${self:custom.NODE_ENV.${opt:stage, self:provider.stage}}
+
+package:
+  exclude:
+    - readme.md
+    - node_modules/@types/**
+    - .git
+    - .secrets*
+    - "*.ts"
+    - "*.js.map"
+
+functions:
+  API:
+    handler: API.handler
+    events:
+    - http: ANY /
+    - http: 'ANY {proxy+}'
