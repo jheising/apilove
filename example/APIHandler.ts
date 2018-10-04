@@ -10,10 +10,10 @@ module.exports.handler = APILove.start({
     ]
 });
 
-let sapi = new SampleAPI();
+/*let sapi = new SampleAPI();
 sapi.fooX("bar")
     .then((data) => {
         console.log(data);
     }).catch((error) => {
         console.error(error);
-    });
+    });*/

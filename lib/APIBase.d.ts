@@ -1,14 +1,19 @@
 import "reflect-metadata";
-export declare type APIParameterSource = "param" | "query" | "body" | "cookie" | "header" | "any";
+export declare type APIParameterSource = "param" | // Parameters in the URL, like /foo/:bar
+"query" | // Query parameters in the URL, like /foo?what=bar
+"body" | // The full body. If sent in JSON or application/x-www-form-urlencoded it will be converted to an object. If this is specified, it will override all others.
+"cookie" | // Cookies
+"header" | // Headers
+"any";
 export interface APIParameterOptions {
-    default?: any;
     optional?: boolean;
-    validator?: (value: any) => boolean;
+    default?: any;
+    processor?: (value: any, req?: any) => any;
     sources?: APIParameterSource | APIParameterSource[];
     rawName?: string;
 }
-export declare function APIParameter(options?: APIParameterOptions): (target: Object, key: string | symbol, parameterIndex: number) => void;
-interface APIEndpointOptions {
+export declare function APIParameter(options: APIParameterOptions): (target: Object, key: string | symbol, parameterIndex: number) => void;
+export interface APIEndpointOptions {
     method?: string;
     path?: string;
     middleware?: Function[];
@@ -22,7 +27,7 @@ export declare class APIError {
     extraData: any;
     constructor(friendlyMessage: any, rawError?: Error, statusCode?: number, extraData?: any);
     static createValidationError(errors: {
-        name: string;
+        parameter: string;
         message: string;
     }[]): APIError;
     static _rawErrorOut(error: Error): any;
@@ -42,4 +47,3 @@ export declare class APIBase {
     private _createHandlerWrapperFunction;
     constructor();
 }
-export {};

@@ -1,32 +1,67 @@
-import {isBoolean, isNil, toString, castArray} from "lodash";
+import {isBoolean, isNil, toString, castArray, toNumber} from "lodash";
 import * as getArguments from "function-arguments";
 
 export class Utils {
 
-    static convertToType(value:any, typeString:string)
-    {
-        let convertedValue;
+    static getRawTypeName(obj){
+        return Object.prototype.toString.call(obj).slice(8, -1);
+    }
 
-        switch(typeString)
+    static convertToType(value: any, convertToType: string):any {
+
+        if(isNil(convertToType))
         {
-            case "String":
+            return value;
+        }
+
+        let convertedValue;
+        let rawValueType = Utils.getRawTypeName(value);
+
+        // No conversion needed
+        if(rawValueType === convertToType)
+        {
+            return value;
+        }
+
+        // Objects and Arrays can only be converted to JSON strings
+        if(rawValueType === "Object" || rawValueType === "Array")
+        {
+            if(convertToType === "String")
             {
+                try {
+                    return JSON.stringify(value);
+                }
+                catch (e) {
+                }
+            }
+
+            return undefined;
+        }
+
+        switch (convertToType) {
+            case "String": {
                 convertedValue = toString(value);
                 break;
             }
-            case "Boolean":
-            {
+            case "Boolean": {
                 convertedValue = Utils.toBoolean(value);
                 break;
             }
-            case "Array":
-            {
+            case "Number": {
+                convertedValue = toNumber(value);
+                break;
+            }
+            case "Array": {
                 convertedValue = castArray(value);
                 break;
             }
-            default:
-            {
-                convertedValue = JSON.parse(value);
+            case "Object": {
+                try {
+                    convertedValue = JSON.parse(value);
+                }
+                catch (e) {
+                    convertedValue = value;
+                }
             }
         }
 
@@ -41,12 +76,10 @@ export class Utils {
         return (/(1|true|yes)/i).test(input);
     }
 
-    static coalesce(...inputArgs:any[]) {
+    static coalesce(...inputArgs: any[]) {
 
-        for(let inputArg of inputArgs)
-        {
-            if(!isNil(inputArg) && inputArg != "")
-            {
+        for (let inputArg of inputArgs) {
+            if (!isNil(inputArg) && inputArg != "") {
                 return inputArg;
             }
         }
@@ -54,8 +87,7 @@ export class Utils {
         return null;
     }
 
-    static getFunctionParamNames(fn:Function):string[]
-    {
+    static getFunctionParamNames(fn: Function): string[] {
         return getArguments(fn);
     }
 }

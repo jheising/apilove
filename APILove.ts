@@ -48,6 +48,7 @@ export class APILove {
 
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({extended: false}));
+        app.use(bodyParser.text());
 
         for (let mw of get(options, "middlewear", [])) {
             app.use(mw);

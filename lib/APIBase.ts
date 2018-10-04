@@ -18,17 +18,35 @@ interface HandlerData {
     handlerParameterData: { [paramIndex: number]: HandlerParameterData };
 }
 
-export type APIParameterSource = "param" | "query" | "body" | "cookie" | "header" | "any";
+export type APIParameterSource =
+    "param" | // Parameters in the URL, like /foo/:bar
+    "query" | // Query parameters in the URL, like /foo?what=bar
+    "body" | // The full body. If sent in JSON or application/x-www-form-urlencoded it will be converted to an object. If this is specified, it will override all others.
+    "cookie" | // Cookies
+    "header" | // Headers
+    "any"; // All of the above (except for body)
 
 export interface APIParameterOptions {
-    default?: any;
+
+    // If set to true, an error will not be thrown if the value is not sent
     optional?: boolean;
-    validator?: (value: any) => boolean;
+
+    // A default value to be used if one can't be found. This would be an equivalent shortcut for setting optional=true and providing a default value for your method property
+    default?: any;
+
+    // A synchronous function that can be used to transform an incoming parameter into something else. Can also be used as validation by throwing an error.
+    // You also get access to the raw express.js req object if you want it.
+    processor?: (value: any, req?) => any;
+
+    // One or more sources from which to look for this value. "any" is the default value
     sources?: APIParameterSource | APIParameterSource[];
-    rawName?: string; // This is the raw name of the API parameter— use this if the function name differs from the name you expect in the API
+
+    // This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
+    // Examples usages might be when looking for a header like "content-type" or a parameter named "function"
+    rawName?: string;
 }
 
-export function APIParameter(options?: APIParameterOptions) {
+export function APIParameter(options: APIParameterOptions) {
     return function (target: Object, key: string | symbol, parameterIndex: number) {
         let handlerData: HandlerData = get(target.constructor.prototype, `__handlerData.${key.toString()}`, {});
         set(handlerData, `handlerParameterData.${parameterIndex}.paramOptions`, options);
@@ -36,7 +54,7 @@ export function APIParameter(options?: APIParameterOptions) {
     }
 }
 
-interface APIEndpointOptions {
+export interface APIEndpointOptions {
     // The method to be used when requesting this endpoint. Defaults to "get".
     method?: string;
 
@@ -66,7 +84,7 @@ export function APIEndpoint(options?: APIEndpointOptions) {
         handlerData.handlerParameterNames = parameterNames;
 
         for (let parameterIndex = 0; parameterIndex < parameterNames.length; parameterIndex++) {
-            set(handlerData, `handlerParameterData.${parameterIndex}.paramType`, parameterMetadata[parameterIndex].name);
+            set(handlerData, `handlerParameterData.${parameterIndex}.paramType`, Utils.getRawTypeName(parameterMetadata[parameterIndex].prototype));
             set(handlerData, `handlerParameterData.${parameterIndex}.paramName`, parameterNames[parameterIndex]);
         }
 
@@ -89,7 +107,7 @@ export class APIError {
         this.extraData = extraData;
     }
 
-    static createValidationError(errors: { name: string, message: string }[]) {
+    static createValidationError(errors: { parameter: string, message: string }[]) {
         return new APIError("validation_error", null, 400, errors);
     }
 
@@ -155,21 +173,18 @@ export class APIResponse {
         this.res = res;
     }
 
-    processHandlerFunction(target:any, handlerFunction:Function, handlerArgs:any[] = [])
-    {
+    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = []) {
         // Add the req, and res to the end arguments if the function wants it
         handlerArgs = handlerArgs.concat([this.req, this.res]);
 
         let handlerPromise = handlerFunction.apply(target, handlerArgs);
-        if(!(handlerPromise instanceof Promise))
-        {
+        if (!(handlerPromise instanceof Promise)) {
             throw new Error(`API function named '${handlerFunction.name}' doesn't return a promise.`);
         }
-        else
-        {
-            handlerPromise.then((data:any) => {
+        else {
+            handlerPromise.then((data: any) => {
                 this.withSuccess(data)
-            }).catch((error:any) => {
+            }).catch((error: any) => {
                 this.withError(error);
             });
         }
@@ -221,50 +236,72 @@ export class APIBase {
             let apiResponse = new APIResponse(req, res);
 
             let handlerArgs = [];
-            let validationErrors: { name: string, message: string }[] = [];
+            let validationErrors: { parameter: string, message: string }[] = [];
 
             // Loop through each parameter in our function and pull it from the request
             for (let index = 0; index < handlerData.handlerParameterNames.length; index++) {
                 let paramData: HandlerParameterData = handlerData.handlerParameterData[index];
-                let paramName = get(paramData, "paramOptions.rawName", handlerData.handlerParameterNames[index]);
+                let paramOptions: APIParameterOptions = get(paramData, "paramOptions", {});
+                let paramName = Utils.coalesce(paramOptions.rawName, handlerData.handlerParameterNames[index]);
 
                 // Ignore request and response parameters if the function asks for it
                 if ((index === handlerData.handlerParameterNames.length - 1 || index === handlerData.handlerParameterNames.length - 2) && ["req", "request", "res", "response"].indexOf(paramName.toLowerCase()) >= 0) {
                     continue;
                 }
 
-                let paramSources: APIParameterSource[] = castArray(get(paramData, "paramOptions.sources", ["any"]));
+                let paramSources: APIParameterSource[] = castArray(get(paramOptions, "sources", ["any"]));
                 let paramValues = [];
 
-                for (let paramSource of paramSources) {
-                    if (paramSource === "param" || paramSource === "any") {
-                        paramValues.push(req.params[paramName]);
+                if (paramSources.indexOf("body") !== -1) {
+
+                    let bodyValue = req.body;
+
+                    if(!isNil(bodyValue))
+                    {
+                        paramValues.push(bodyValue);
                     }
-                    if (paramSource === "query" || paramSource === "any") {
-                        paramValues.push(req.query[paramName]);
-                    }
-                    if (paramSource === "body" || paramSource === "any") {
-                        paramValues.push(get(req, "body", {})[paramName]);
-                    }
-                    if (paramSource === "cookie" || paramSource === "any") {
-                        paramValues.push(get(req, "cookie", {})[paramName]);
-                    }
-                    if (paramSource === "header" || paramSource === "any") {
-                        paramValues.push(req.get(paramName));
+                }
+                else {
+                    for (let paramSource of paramSources) {
+                        if (paramSource === "param" || paramSource === "any") {
+                            paramValues.push(req.params[paramName]);
+                        }
+                        if (paramSource === "query" || paramSource === "any") {
+                            paramValues.push(req.query[paramName]);
+                        }
+                        if (paramSource === "cookie" || paramSource === "any") {
+                            paramValues.push(get(req, "cookie", {})[paramName]);
+                        }
+                        if (paramSource === "header" || paramSource === "any") {
+                            paramValues.push(req.get(paramName));
+                        }
                     }
                 }
 
                 // Add a default value to the possible options
-                paramValues.push(paramData.paramOptions.default);
+                paramValues.push(paramOptions.default);
 
                 let argValue = Utils.coalesce.apply(Utils, paramValues);
+
+                if (paramOptions.processor) {
+                    try {
+                        argValue = paramOptions.processor(argValue, req);
+                    }
+                    catch (error) {
+                        validationErrors.push({
+                            parameter: paramName,
+                            message: error.message || error.toString()
+                        });
+                        continue;
+                    }
+                }
 
                 if (isNil(argValue)) {
 
                     // Is this parameter required?
-                    if (!get(paramData, "paramOptions.optional", false)) {
+                    if (!get(paramOptions, "optional", false)) {
                         validationErrors.push({
-                            name: paramName,
+                            parameter: paramName,
                             message: "missing"
                         });
                     }
@@ -273,34 +310,15 @@ export class APIBase {
                     continue;
                 }
 
-                switch (paramData.paramType) {
-                    case "Number": {
-                        argValue = toNumber(argValue);
+                argValue = Utils.convertToType(argValue, paramData.paramType);
 
-                        if (isNaN(argValue)) {
-                            validationErrors.push({
-                                name: paramName,
-                                message: "invalid"
-                            });
-                        }
-
-                        break;
-                    }
-                    case "String":
-                    default: {
-                        argValue = toString(argValue);
-                        break;
-                    }
-                }
-
-                let validator = get(paramData, "paramOptions.validator");
-                if (!isNil(validator)) {
-                    if (!validator(argValue)) {
-                        validationErrors.push({
-                            name: paramName,
-                            message: "invalid"
-                        });
-                    }
+                if(isNil(argValue) || isNaN(argValue))
+                {
+                    validationErrors.push({
+                        parameter: paramName,
+                        message: "invalid"
+                    });
+                    continue;
                 }
 
                 handlerArgs.push(argValue);
@@ -326,7 +344,7 @@ export class APIBase {
 
             let handlerWrapper = this._createHandlerWrapperFunction(handlerData);
             argsArray.push(handlerWrapper);
-            this.app[options.method].apply(this.app, argsArray);
+            this.app[options.method.toLowerCase()].apply(this.app, argsArray);
         });
     }
 }
