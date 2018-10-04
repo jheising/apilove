@@ -1,9 +1,10 @@
 #apilove
+
 A no-nonsense framework for creating server(less) APIs in TypeScript — api♥︎
 
 ## features
 
-#### decorators
+### decorators
 TypeScript decorators make building routes, parameters, and validation a breeze (don't worry, you still have access to all of the underlying raw express.js req, res objects if you want them).
 
 ```typescript
@@ -20,7 +21,7 @@ export class SampleAPI extends APIBase {
 }
 ```
 
-#### server(less)
+### server(less)
 Your API code will run seamlessly both as an API Gateway/Lambda combo or a standard express.js server— apilove automatically determines the environment it's running in and configures itself accordingly.
 
 ```typescript
@@ -36,10 +37,10 @@ module.exports.handler = APILove.start({
 });
 ```
 
-#### lazy loading
+### lazy loading
 APIs can be split into smaller chunks and loaded on demand— this can cut down drastically on memory requirements for Lambda functions by only loading the parts of your API that are needed for a given request.
 
-#### endpoints are functions
+### endpoints are functions
 If you use the supplied TypeScript decorators your API handler functions look just like standard functions (because they are).
 
 ```typescript
@@ -53,12 +54,12 @@ sapi.fooX("bar")
     });
 ```
 
-#### deploy-joy
+### deploy-joy
 We include a sample serverless.yml configuration which allows you to fully deploy your API to AWS with [serverless](https://serverless.com/) in a few keystrokes.
 
 `> serverless deploy`
 
-#### handy services
+### handy services
 We include some standard service libraries that make building APIs even easier:
 
 - Key-Value Storage: A generic key-value storage service (with TTL) that will store values in memory while in development, but can/will automatically switch to DynamoDB when deployed to AWS.
@@ -66,7 +67,7 @@ We include some standard service libraries that make building APIs even easier:
 
 ## docs
 
-#### building your api
+### building your api
 An apilove API is simply any TypeScript class which extends the `APIBase` class, and decorated methods that return a Promise.
 
 ```typescript
@@ -86,7 +87,7 @@ export class SampleAPI extends APIBase {
 
 In the above example, apilove will call this function any time a GET request is made to your API at `http://myapi.com/foo`. It will also expect a parameter called `what` to be sent in some form or another (more on parameters later).
 
-##### @APIEndpoint decorator
+#### @APIEndpoint decorator
 ```typescript
 @APIEndpoint(options: APIEndpointOptions)
 
@@ -102,4 +103,4 @@ interface APIEndpointOptions {
 }
 ```
 
-#### api parameters
+### api parameters
