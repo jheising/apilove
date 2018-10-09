@@ -5,6 +5,7 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const lodash_1 = require("lodash");
 const APIBase_1 = require("./lib/APIBase");
 const APIConfig_1 = require("./lib/APIConfig");
@@ -29,6 +30,7 @@ class APILove {
     }
     static start(options) {
         const app = express();
+        app.use(cookieParser());
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({ extended: false }));
         app.use(bodyParser.text());

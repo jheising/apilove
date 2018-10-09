@@ -90,4 +90,15 @@ export class Utils {
     static getFunctionParamNames(fn: Function): string[] {
         return getArguments(fn);
     }
+
+    static shouldCallbackWithError(error: Error, callback: (error: Error, ...args: any[]) => void): boolean {
+
+        if(error)
+        {
+            if(callback) callback(error);
+            return true;
+        }
+
+        return false;
+    }
 }

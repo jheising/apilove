@@ -1,9 +1,9 @@
-import {KVService} from "./KVService";
+import {KVServiceProvider} from "../KVService";
 import {isNil, get} from "lodash";
 import * as aws from "aws-sdk";
-import {APIConfig} from "../../APIConfig";
+import {APIConfig} from "../../../APIConfig";
 
-export class DynamoDBKVStorage extends KVService
+export class DynamoDBKVStorage extends KVServiceProvider
 {
     private static _dynamoClient;
     static get dynamoClient() {
@@ -14,13 +14,16 @@ export class DynamoDBKVStorage extends KVService
         return DynamoDBKVStorage._dynamoClient;
     }
 
-    setValue(namespace:string, key:string, value:any, expirationInSeconds:number, done:(error?:Error) => void)
+    setValue(namespace:string, key:string, value:any, expirationInSeconds:number):Promise<void>
     {
         value = JSON.stringify(value);
 
         let data: any = {
+            namespace: {
+                S: namespace
+            },
             key: {
-                S: `${namespace}:${key}`
+                S: key
             },
             value: {
                 S: value
@@ -34,40 +37,33 @@ export class DynamoDBKVStorage extends KVService
             data.expires.N = Math.round(Date.now() / 1000 + expirationInSeconds).toString();
         }
 
-        DynamoDBKVStorage.dynamoClient.putItem({
+        return DynamoDBKVStorage.dynamoClient.putItem({
             Item: data,
             TableName: APIConfig.DYNAMO_KV_STORAGE_TABLE_NAME,
             ReturnConsumedCapacity: "NONE"
-        }, (error, data) => {
-            if(done)
-            {
-                done(error);
-            }
-        });
+        }).promise().then(() => Promise.resolve());
     }
 
-    hasValue(namespace:string, key:string, done:(error?:Error, hasValue?:boolean) => void)
+    hasValue(namespace:string, key:string):Promise<boolean>
     {
-        this.getValue(namespace, key, (error, value) => {
-            if(done)
-            {
-                done(error, !isNil(value));
-            }
-        });
+        return this.getValue(namespace, key).then((value) => Promise.resolve(!isNil(value)));
     }
 
-    getValue(namespace:string, key:string, done:(error?:Error, value?:any) => void)
+    getValue(namespace:string, key:string):Promise<any>
     {
-        DynamoDBKVStorage.dynamoClient.getItem({
+        return DynamoDBKVStorage.dynamoClient.getItem({
             Key: {
+                namespace: {
+                    S: namespace
+                },
                 key: {
-                    S: `${namespace}:${key}`
+                    S: key
                 }
             },
             TableName: APIConfig.DYNAMO_KV_STORAGE_TABLE_NAME,
             ReturnConsumedCapacity: "NONE",
             AttributesToGet: ["value", "expires"]
-        }, (error, data) => {
+        }).promise().then((data) => {
             let value = get(data, "Item.value.S");
 
             let expires = get(data, "Item.expires.N", -1);
@@ -85,34 +81,29 @@ export class DynamoDBKVStorage extends KVService
                 value = JSON.parse(value);
             }
 
-            if(done)
-            {
-                done(null, value);
-            }
+            return Promise.resolve(value);
         });
     }
 
-    deleteValue(namespace:string, key:string, done:(error?:Error) => void)
+    deleteValue(namespace:string, key:string):Promise<void>
     {
-        DynamoDBKVStorage.dynamoClient.deleteItem({
+        return DynamoDBKVStorage.dynamoClient.deleteItem({
             Key: {
+                namespace: {
+                    S: namespace
+                },
                 key: {
-                    S: `${namespace}:${key}`
+                    S: key
                 }
             },
             TableName: APIConfig.DYNAMO_KV_STORAGE_TABLE_NAME,
             ReturnConsumedCapacity: "NONE"
-        }, (error, data) => {
-            if(done)
-            {
-                done(error);
-            }
-        });
+        }).promise().then(() => Promise.resolve());
     }
 
-    updateExpiration(namespace:string, key:string, expirationInSeconds:number, done:(error?:Error) => void)
+    updateExpiration(namespace:string, key:string, expirationInSeconds:number):Promise<void>
     {
-        DynamoDBKVStorage.dynamoClient.updateItem({
+        return DynamoDBKVStorage.dynamoClient.updateItem({
             ExpressionAttributeNames: {
                 "#AT": "expires"
             },
@@ -122,18 +113,16 @@ export class DynamoDBKVStorage extends KVService
                 }
             },
             Key: {
+                namespace: {
+                    S: namespace
+                },
                 key: {
-                    S: `${namespace}:${key}`
+                    S: key
                 }
             },
             ReturnValues: "NONE",
             TableName: APIConfig.DYNAMO_KV_STORAGE_TABLE_NAME,
             UpdateExpression: "SET #AT = :t"
-        }, (error, data) => {
-            if(done)
-            {
-                done(error);
-            }
-        });
+        }).promise().then(() => Promise.resolve());
     }
 }

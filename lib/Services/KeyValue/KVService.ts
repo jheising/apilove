@@ -1,20 +1,65 @@
 import {APIConfig} from "../../APIConfig";
+import {DataUtils} from "../../DataUtils";
+import {isNil} from "lodash";
 
-export abstract class KVService {
-    private static _instance:KVService;
-    static get instance():KVService
-    {
-        if(!KVService._instance) {
-            let kvProviderClass = require(`./${APIConfig.KV_STORAGE_SERVICE_PROVIDER}`)[APIConfig.KV_STORAGE_SERVICE_PROVIDER];
-            KVService._instance = new kvProviderClass();
+export abstract class KVServiceProvider {
+    abstract setValue(namespace: string, key: string, value: any, expirationInSeconds: number): Promise<void>;
+
+    abstract getValue(namespace: string, key: string): Promise<any>;
+
+    abstract deleteValue(namespace: string, key: string): Promise<void>;
+
+    abstract hasValue(namespace: string, key: string): Promise<boolean>;
+
+    abstract updateExpiration(namespace: string, key: string, expirationInSeconds: number): Promise<void>;
+}
+
+export class KVService {
+
+    private static _providerInstance: KVServiceProvider;
+
+    private static get _provider(): KVServiceProvider {
+        if (!KVService._providerInstance) {
+            let providerClass = require(`./Providers/${APIConfig.KV_STORAGE_SERVICE_PROVIDER}`)[APIConfig.KV_STORAGE_SERVICE_PROVIDER];
+            KVService._providerInstance = new providerClass();
         }
-
-        return KVService._instance;
+        return KVService._providerInstance;
     }
 
-    abstract setValue(namespace:string, key:string, value:any, expirationInSeconds:number, done:(error?:Error) => void);
-    abstract getValue(namespace:string, key:string, done:(error?:Error, value?:any) => void);
-    abstract deleteValue(namespace:string, key:string, done:(error?:Error) => void);
-    abstract hasValue(namespace:string, key:string, done:(error?:Error, hasValue?:boolean) => void);
-    abstract updateExpiration(namespace:string, key:string, expirationInSeconds:number, done:(error?:Error) => void);
+    static setValue(namespace: string, key: string, value: any, expirationInSeconds: number, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<void> {
+
+        if (encrypted) {
+            value = DataUtils.encrypt(JSON.stringify(value));
+        }
+
+        return KVService._provider.setValue(namespace, key, value, expirationInSeconds);
+    }
+
+    static getValue(namespace: string, key: string, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<any> {
+        return KVService._provider.getValue(namespace, key).then((value) => {
+            return new Promise((resolve, reject) => {
+                try {
+                    value = JSON.parse(DataUtils.decrypt(value));
+                }
+                catch (e) {
+                    reject(e);
+                    return;
+                }
+
+                resolve(value);
+            });
+        });
+    }
+
+    static deleteValue(namespace: string, key: string): Promise<void> {
+        return KVService._provider.deleteValue(namespace, key);
+    }
+
+    static hasValue(namespace: string, key: string): Promise<boolean> {
+        return KVService._provider.hasValue(namespace, key);
+    }
+
+    static updateExpiration(namespace: string, key: string, expirationInSeconds: number):Promise<void> {
+        return KVService._provider.updateExpiration(namespace, key, expirationInSeconds);
+    }
 }

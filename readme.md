@@ -96,12 +96,15 @@ In the above example, apilove will call this method any time a GET request is ma
 interface APIEndpointOptions {
     // The method to be used when requesting this endpoint. Defaults to "get".
     method?: string;
-    
+
     // The path to reach this endpoint. Defaults to "/".
     path?: string;
-    
+
     // Any express.js middleware functions you want to be executed before invoking this method. Useful for things like authentication.
-    middleware?: Function[];
+    middleware?: ((req, res, next?) => void)[] | ((req, res, next) => void);
+
+    // Specify a function here to handle the response yourself
+    successResponse?: (responseData:any, res) => void;
 }
 ```
 
@@ -143,14 +146,6 @@ fooX(
 ```typescript
 @APIParameter(options: APIParameterOptions)
 
-type APIParameterSource =
-    "param" | // Parameters in the URL, like /foo/:bar
-    "query" | // Query parameters in the URL, like /foo?what=bar
-    "body" | // The full body. If sent in JSON or application/x-www-form-urlencoded it will be converted to an object. If this is specified, it will override all others.
-    "cookie" | // Cookies
-    "header" | // Headers
-    "any"; // All of the above (except for body)
-
 interface APIParameterOptions {
 
     // If set to true, an error will not be thrown if the value is not sent
@@ -163,14 +158,20 @@ interface APIParameterOptions {
     // You also get access to the raw express.js req object if you want it.
     processor?: (value: any, req?) => any;
 
-    // One or more sources from which to look for this value. "any" is the default value
-    sources?: APIParameterSource | APIParameterSource[];
+    // One or more sources from which to look for this value. This is a path to a object in the request object. For example: ["headers", "query"]
+    // would return the first value it encountered in req.headers or req.query that matched your parameter name. You can also specify a full path like ["user.id"].
+    // The special value "any" will try to search the most common places for a value.
+    // "any" is the default value.
+    sources?: string[];
 
     // This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
     // Examples usages might be when looking for a header like "content-type" or a parameter named "function"
     rawName?: string;
 }
 ```
+
+#### redirects
+If you'd like to redirect the response, simply pass a `URL` object back to the `resolve` callback.
 
 #### accessing the raw express.js request and response
 While it's generally discouraged (because it may break the ability to call your method like a regular function), you can also gain access to the raw request and response objects by appending them to your method parameters.

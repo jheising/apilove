@@ -17,6 +17,8 @@ provider:
   logRetentionInDays: 14
   environment:
     NODE_ENV: ${self:custom.NODE_ENV.${opt:stage, self:provider.stage}}
+# Override this value if you want to use a custom domain name
+    API_URL_BASE: { "Fn::Join" : ["", [ "https://", { "Ref" : "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}" ] ]  }
 # Uncomment if you want DynamoDB support for key-value storage
 #    KV_STORAGE_SERVICE_PROVIDER: "DynamoDBKVStorage"
 #    DYNAMO_KV_STORAGE_TABLE_NAME: ${self:service}-kv-storage
@@ -27,6 +29,7 @@ provider:
 #    - dynamodb:GetItem
 #    - dynamodb:PutItem
 #    - dynamodb:UpdateItem
+#    - dynamodb:Query
 #    Resource:
 #      Fn::GetAtt:
 #      - kvStorageTable
@@ -53,14 +56,23 @@ functions:
 #  Resources:
 #    kvStorageTable:
 #      Type: AWS::DynamoDB::Table
+#      DeletionPolicy: Retain
 #      Properties:
 #        TableName: ${self:provider.environment.DYNAMO_KV_STORAGE_TABLE_NAME}
 #        AttributeDefinitions:
+#        - AttributeName: namespace
+#          AttributeType: S
 #        - AttributeName: key
 #          AttributeType: S
+#        - AttributeName: value
+#          AttributeType: S
+#        - AttributeName: expires
+#          AttributeType: N
 #        KeySchema:
-#        - AttributeName: key
+#        - AttributeName: namespace
 #          KeyType: HASH
+#        - AttributeName: key
+#          KeyType: RANGE
 #        ProvisionedThroughput:
 #          ReadCapacityUnits: 5
 #          WriteCapacityUnits: 5

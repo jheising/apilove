@@ -1,5 +1,6 @@
 import * as express from "express";
 import * as bodyParser from "body-parser";
+import * as cookieParser from "cookie-parser";
 import {get, isNil} from "lodash";
 import {APIBase, APIResponse} from "./lib/APIBase";
 import {APIConfig} from "./lib/APIConfig";
@@ -45,6 +46,7 @@ export class APILove {
 
         const app = express();
 
+        app.use(cookieParser());
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({extended: false}));
         app.use(bodyParser.text());

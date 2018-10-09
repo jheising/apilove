@@ -4,6 +4,7 @@ import "reflect-metadata";
 import {Utils} from "./Utils";
 import {APIConfig} from "./APIConfig";
 import * as shortid from "shortid";
+import {URL} from "url";
 
 interface HandlerParameterData {
     paramType: string;
@@ -18,14 +19,6 @@ interface HandlerData {
     handlerParameterData: { [paramIndex: number]: HandlerParameterData };
 }
 
-export type APIParameterSource =
-    "param" | // Parameters in the URL, like /foo/:bar
-    "query" | // Query parameters in the URL, like /foo?what=bar
-    "body" | // The full body. If sent in JSON or application/x-www-form-urlencoded it will be converted to an object. If this is specified, it will override all others.
-    "cookie" | // Cookies
-    "header" | // Headers
-    "any"; // All of the above (except for body)
-
 export interface APIParameterOptions {
 
     // If set to true, an error will not be thrown if the value is not sent
@@ -39,7 +32,7 @@ export interface APIParameterOptions {
     processor?: (value: any, req?) => any;
 
     // One or more sources from which to look for this value. "any" is the default value
-    sources?: APIParameterSource | APIParameterSource[];
+    sources?: string[] | string;
 
     // This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
     // Examples usages might be when looking for a header like "content-type" or a parameter named "function"
@@ -62,7 +55,10 @@ export interface APIEndpointOptions {
     path?: string;
 
     // Any express.js middleware functions you want to be executed before invoking this method. Useful for things like authentication.
-    middleware?: Function[];
+    middleware?: ((req, res, next?) => void)[] | ((req, res, next) => void);
+
+    // Specify a function here to handle the response yourself
+    successResponse?: (responseData:any, res) => void;
 }
 
 export function APIEndpoint(options?: APIEndpointOptions) {
@@ -101,17 +97,52 @@ export class APIError {
 
     constructor(friendlyMessage: any, rawError?: Error, statusCode: number = 500, extraData?: any) {
         this.id = shortid.generate();
-        this.friendlyMessage = friendlyMessage;
+
+        // Is this already and API friendly error?
+        if (rawError && "isAPIFriendly" in rawError) {
+            this.friendlyMessage = (<any>rawError).message;
+            this.statusCode = (<any>rawError).statusCode;
+        }
+        else {
+            this.friendlyMessage = friendlyMessage;
+            this.statusCode = statusCode;
+        }
+
         this.rawError = rawError;
-        this.statusCode = statusCode;
         this.extraData = extraData;
+    }
+
+    static shouldReject(error: Error, rejectFunction: Function) {
+        if (!isNil(error)) {
+            if (rejectFunction) {
+                rejectFunction(error);
+            }
+            return true;
+        }
+
+        return false;
     }
 
     static createValidationError(errors: { parameter: string, message: string }[]) {
         return new APIError("validation_error", null, 400, errors);
     }
 
-    static _rawErrorOut(error: Error) {
+    static create404NotFoundError(): Error {
+        return APIError.createAPIFriendlyError("not found", 404);
+    }
+
+    static create401UnauthorizedError(): Error {
+        return APIError.createAPIFriendlyError("unauthorized", 401);
+    }
+
+    static createAPIFriendlyError(message: string, statusCode: number = 500): Error {
+        let error = new Error(message);
+        (<any>error).isAPIFriendly = true;
+        (<any>error).statusCode = statusCode;
+        return error;
+    }
+
+    private static _rawErrorOut(error: Error) {
 
         //stack = stack.split('\n').map(function (line) { return line.trim(); });
 
@@ -150,10 +181,10 @@ export class APIError {
             "this": "failed",
             "with": this.statusCode,
             "because": {
-                "id": this.id,
                 "message": this.friendlyMessage,
                 "details": this.extraData
-            }
+            },
+            "id": this.id
         };
 
         if (includeRawError && !isNil(this.rawError)) {
@@ -173,7 +204,11 @@ export class APIResponse {
         this.res = res;
     }
 
-    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = []) {
+    static withError(req, res, error: any, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
+        return new APIResponse(req, res).withError(error, hapiOutput);
+    }
+
+    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = [], successResponseHandler?: (responseData:any, res) => void) {
         // Add the req, and res to the end arguments if the function wants it
         handlerArgs = handlerArgs.concat([this.req, this.res]);
 
@@ -183,7 +218,21 @@ export class APIResponse {
         }
         else {
             handlerPromise.then((data: any) => {
-                this.withSuccess(data)
+
+                // If the data is a URL, consider this a redirect.
+                if (data instanceof URL) {
+                    this.res.redirect((<URL>data).toString());
+                    return;
+                }
+
+                if(!isNil(successResponseHandler))
+                {
+                    successResponseHandler(data, this. res);
+                }
+                else
+                {
+                    this.withSuccess(data, 200);
+                }
             }).catch((error: any) => {
                 this.withError(error);
             });
@@ -249,39 +298,36 @@ export class APIBase {
                     continue;
                 }
 
-                let paramSources: APIParameterSource[] = castArray(get(paramOptions, "sources", ["any"]));
-                let paramValues = [];
+                let paramSources: string[] = castArray(get(paramOptions, "sources", ["any"]));
+                let paramValue;
 
                 if (paramSources.indexOf("body") !== -1) {
 
                     let bodyValue = req.body;
 
-                    if(!isNil(bodyValue))
-                    {
-                        paramValues.push(bodyValue);
+                    if (!isNil(bodyValue)) {
+                        paramValue = bodyValue;
                     }
                 }
                 else {
                     for (let paramSource of paramSources) {
-                        if (paramSource === "param" || paramSource === "any") {
-                            paramValues.push(req.params[paramName]);
+
+                        if (paramSource === "any") {
+                            paramValue = Utils.coalesce(get(req, "params",{})[paramName], get(req, "query",{})[paramName], get(req, "cookie",{})[paramName], req.header(paramName));
                         }
-                        if (paramSource === "query" || paramSource === "any") {
-                            paramValues.push(req.query[paramName]);
+                        else
+                        {
+                            paramValue = get(req, paramSource);
                         }
-                        if (paramSource === "cookie" || paramSource === "any") {
-                            paramValues.push(get(req, "cookie", {})[paramName]);
-                        }
-                        if (paramSource === "header" || paramSource === "any") {
-                            paramValues.push(req.get(paramName));
+
+                        if (!isNil(paramValue)) {
+                            break;
                         }
                     }
+
                 }
 
-                // Add a default value to the possible options
-                paramValues.push(paramOptions.defaultValue);
-
-                let argValue = Utils.coalesce.apply(Utils, paramValues);
+                let argValue = Utils.coalesce(paramValue, paramOptions.defaultValue);
 
                 if (paramOptions.processor) {
                     try {
@@ -312,8 +358,7 @@ export class APIBase {
 
                 argValue = Utils.convertToType(argValue, paramData.paramType);
 
-                if(isNil(argValue) || isNaN(argValue))
-                {
+                if (isNil(argValue) || isNaN(argValue)) {
                     validationErrors.push({
                         parameter: paramName,
                         message: "invalid"
@@ -329,7 +374,7 @@ export class APIBase {
                 return;
             }
 
-            apiResponse.processHandlerFunction(this, handlerData.handlerFunction, handlerArgs);
+            apiResponse.processHandlerFunction(this, handlerData.handlerFunction, handlerArgs, handlerData.options.successResponse);
         };
     }
 
@@ -339,7 +384,7 @@ export class APIBase {
             let argsArray: any[] = [options.path];
 
             if (options.middleware) {
-                argsArray = argsArray.concat(options.middleware);
+                argsArray = argsArray.concat(castArray(options.middleware));
             }
 
             let handlerWrapper = this._createHandlerWrapperFunction(handlerData);
