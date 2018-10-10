@@ -35,19 +35,20 @@ export class KVService {
         return KVService._provider.setValue(namespace, key, value, expirationInSeconds);
     }
 
-    static getValue(namespace: string, key: string, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<any> {
+    static getValue(namespace: string, key: string, defaultValue?:any, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<any> {
         return KVService._provider.getValue(namespace, key).then((value) => {
-            return new Promise((resolve, reject) => {
-                try {
-                    value = JSON.parse(DataUtils.decrypt(value));
-                }
-                catch (e) {
-                    reject(e);
-                    return;
-                }
 
-                resolve(value);
-            });
+            if(isNil(value))
+            {
+                return defaultValue;
+            }
+
+            if(encrypted)
+            {
+                value = JSON.parse(DataUtils.decrypt(value));
+            }
+
+            return value;
         });
     }
 
