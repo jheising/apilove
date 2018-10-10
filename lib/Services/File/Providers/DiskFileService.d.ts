@@ -5,7 +5,7 @@ export declare class DiskFileService implements FileServiceProvider {
     private _isInvalidFilePath;
     writeFile(relativePath: string, contents: string): Promise<void>;
     readFile(relativePath: string): Promise<string>;
-    fileExists(relativePath: string): Promise<boolean>;
+    pathExists(relativePath: string): Promise<boolean>;
     deleteFile(relativePath: string): Promise<void>;
     listDirectoriesInPath(relativePath: string): Promise<string[]>;
 }

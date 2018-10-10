@@ -1,5 +1,5 @@
 import * as express from "express";
-import {defaults, get, set, isNil, each, map, toString, toNumber, isArray, castArray, isString, isNaN} from "lodash";
+import {defaults, get, set, isNil, each, map, toString, toNumber, isArray, castArray, isString, isNaN, has} from "lodash";
 import "reflect-metadata";
 import {Utils} from "./Utils";
 import {APIConfig} from "./APIConfig";
@@ -99,7 +99,7 @@ export class APIError {
         this.id = shortid.generate();
 
         // Is this already and API friendly error?
-        if (rawError && "isAPIFriendly" in rawError) {
+        if (get(rawError, "isAPIFriendly", false)) {
             this.friendlyMessage = (<any>rawError).message;
             this.statusCode = (<any>rawError).statusCode;
         }
@@ -143,8 +143,6 @@ export class APIError {
     }
 
     private static _rawErrorOut(error: Error) {
-
-        //stack = stack.split('\n').map(function (line) { return line.trim(); });
 
         let errorData: any = {
             "error": error.toString()

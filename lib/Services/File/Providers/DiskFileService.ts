@@ -42,7 +42,7 @@ export class DiskFileService implements FileServiceProvider {
             .catch((error) => Promise.reject(error.code === "ENOENT" ? APIError.create404NotFoundError() : error));;
     }
 
-    fileExists(relativePath: string): Promise<boolean> {
+    pathExists(relativePath: string): Promise<boolean> {
         let filePath = path.join(this._rootPath, relativePath);
         return this._isInvalidFilePath(filePath).then(() => util.promisify(fs.pathExists)(filePath));
     }

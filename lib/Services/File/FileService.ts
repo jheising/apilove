@@ -4,7 +4,7 @@ export abstract class FileServiceProvider {
     abstract writeFile(relativePath: string, contents: string):Promise<void>;
     abstract readFile(relativePath: string):Promise<string>;
     abstract listDirectoriesInPath(relativePath: string):Promise<string[]>;
-    abstract fileExists(relativePath: string):Promise<boolean>;
+    abstract pathExists(relativePath: string):Promise<boolean>;
     abstract deleteFile(relativePath: string):Promise<void>;
 }
 
@@ -32,8 +32,8 @@ export class FileService {
         return FileService._provider.listDirectoriesInPath(relativePath);
     }
 
-    static fileExists(relativePath: string):Promise<boolean> {
-        return FileService._provider.fileExists(relativePath);
+    static pathExists(relativePath: string):Promise<boolean> {
+        return FileService._provider.pathExists(relativePath);
     }
 
     static deleteFile(relativePath: string):Promise<void>

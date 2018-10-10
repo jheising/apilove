@@ -1,6 +1,6 @@
 {
   "name": "apilove",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/jheising/apilove"
@@ -23,7 +23,6 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^10.11.3",
-    "commander": "^2.18.0",
     "reflect-metadata": "^0.1.12"
   },
   "dependencies": {

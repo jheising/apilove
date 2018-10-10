@@ -29,13 +29,15 @@ export class DiskKVService extends KVServiceProvider {
     }
 
     hasValue(namespace: string, key: string):Promise<boolean> {
-        return DiskKVService._fileService.fileExists(`${slugify(namespace)}/${slugify(key)}.json`);
+        return DiskKVService._fileService.pathExists(`${slugify(namespace)}/${slugify(key)}.json`);
     }
 
     private _getValue(namespace: string, key: string):Promise<{value:any, expires:number}> {
         return DiskKVService._fileService.readFile(`${slugify(namespace)}/${slugify(key)}.json`).then((fileContents) => {
             let data = JSON.parse(fileContents);
             return Promise.resolve(data);
+        }).catch(() => {
+            return;
         });
     }
 
