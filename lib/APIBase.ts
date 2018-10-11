@@ -325,24 +325,21 @@ export class APIBase {
                 let paramSources: string[] = castArray(get(paramOptions, "sources", ["params", "query", "body", "cookie", "headers"]));
                 let paramValue;
 
-                for(let paramSource of paramSources)
-                {
+                for (let paramSource of paramSources) {
                     let paramValues = get(req, paramSource);
 
-                    if(isNil(paramValues))
-                    {
+                    if (isNil(paramValues)) {
                         continue;
                     }
 
-                    if(paramOptions.includeFullSource)
-                    {
+                    if (paramOptions.includeFullSource ||
+                        (/[\.\[\]]/g).test(paramSource) // If the source contains any of the characters ".[]" (ie a path), assume the developer meant to include the full source.
+                    ) {
                         paramValue = paramValues;
                         break;
                     }
-                    else
-                    {
-                        if(has(paramValues, paramName))
-                        {
+                    else {
+                        if (has(paramValues, paramName)) {
                             paramValue = paramValues[paramName];
                             break;
                         }
