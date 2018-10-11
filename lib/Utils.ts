@@ -1,16 +1,15 @@
-import {isBoolean, isNil, toString, castArray, toNumber} from "lodash";
+import {isBoolean, isNil, toString, castArray, toNumber, isString} from "lodash";
 import * as getArguments from "function-arguments";
 
 export class Utils {
 
-    static getRawTypeName(obj){
+    static getRawTypeName(obj) {
         return Object.prototype.toString.call(obj).slice(8, -1);
     }
 
-    static convertToType(value: any, convertToType: string):any {
+    static convertToType(value: any, convertToType: string): any {
 
-        if(isNil(convertToType))
-        {
+        if (isNil(convertToType)) {
             return value;
         }
 
@@ -18,16 +17,13 @@ export class Utils {
         let rawValueType = Utils.getRawTypeName(value);
 
         // No conversion needed
-        if(rawValueType === convertToType)
-        {
+        if (rawValueType === convertToType) {
             return value;
         }
 
         // Objects and Arrays can only be converted to JSON strings
-        if(rawValueType === "Object" || rawValueType === "Array")
-        {
-            if(convertToType === "String")
-            {
+        if (rawValueType === "Object" || rawValueType === "Array") {
+            if (convertToType === "String") {
                 try {
                     return JSON.stringify(value);
                 }
@@ -79,9 +75,13 @@ export class Utils {
     static coalesce(...inputArgs: any[]) {
 
         for (let inputArg of inputArgs) {
-            if (!isNil(inputArg) && inputArg != "") {
-                return inputArg;
+
+            // Consider an empty string as a null value
+            if (isNil(inputArg) || (isString(inputArg) && inputArg === "")) {
+                continue;
             }
+
+            return inputArg;
         }
 
         return null;
@@ -93,9 +93,8 @@ export class Utils {
 
     static shouldCallbackWithError(error: Error, callback: (error: Error, ...args: any[]) => void): boolean {
 
-        if(error)
-        {
-            if(callback) callback(error);
+        if (error) {
+            if (callback) callback(error);
             return true;
         }
 

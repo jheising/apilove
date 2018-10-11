@@ -117,6 +117,7 @@ Here is a little bit about how api parameters are mapped to your method:
 1. The incoming API request is scanned for a parameter to match your method parameter in the following order:
     1. A path parameter, like `/foo/:what` with the same name
     1. A query parameter, like `?what=bar` wtih the same name
+    1. A body parameter specified in either JSON or form values
     1. A cookie with the same name
     1. A header with the same name
 1. By default, if no value can be found an error is automatically returned to the API caller and the method is not called.
@@ -148,24 +149,47 @@ fooX(
 
 interface APIParameterOptions {
 
-    // If set to true, an error will not be thrown if the value is not sent
+    /**
+     * If set to true, an error will not be thrown to the API caller if the value is not sent
+     */
     optional?: boolean;
 
-    // A default value to be used if one can't be found. This would be an equivalent shortcut for setting optional=true and providing a default value for your method property
+    /**
+     * A default value to be used if one can't be found. This would be an equivalent shortcut for setting optional=true and providing a default value for your method property
+     */
     defaultValue?: any;
 
-    // A synchronous function that can be used to transform an incoming parameter into something else. Can also be used as validation by throwing an error.
-    // You also get access to the raw express.js req object if you want it.
+    /**
+     * A synchronous function that can be used to transform an incoming parameter into something else. Can also be used as validation by throwing an error.
+     * You also get access to the raw express.js req object if you want it.
+     */
     processor?: (value: any, req?) => any;
 
-    // One or more sources from which to look for this value. This is a path to a object in the request object. For example: ["headers", "query"]
-    // would return the first value it encountered in req.headers or req.query that matched your parameter name. You can also specify a full path like ["user.id"].
-    // The special value "any" will try to search the most common places for a value.
-    // "any" is the default value.
-    sources?: string[];
+    /**
+     * One or more sources from which to look for this value. This is basically a path in the req object. So for example, a value of `query` would be equivalent to `req.query[myParamName]`
+     * Multiple values can be defined, and whichever one results in a non-null value first will be used. Defaults to ["params", "query", "body", "cookie", "headers"].
+     */
+    sources?: string[] | string;
 
-    // This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
-    // Examples usages might be when looking for a header like "content-type" or a parameter named "function"
+    /**
+     * If set to true, the entire source will be returned instead of looking for a particular value. Defaults to false.
+     *
+     * Examples:
+     *
+     * The following would look for something named `userData` in the query params and return that.
+     * @APIParameter({sources:["query"]})
+     * userData:string
+     *
+     * The following would take all the query params and return them as an object
+     * @APIParameter({sources:["query"], includeFullSource:true})
+     * userData:{[paramName:string] : any}
+     */
+    includeFullSource?: boolean;
+
+    /**
+     * This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
+     * Examples usages might be when looking for a header like "content-type" or a parameter named "function"
+     */
     rawName?: string;
 }
 ```
