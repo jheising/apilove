@@ -26,7 +26,7 @@ export class KVService {
         return KVService._providerInstance;
     }
 
-    static setValue(namespace: string, key: string, value: any, expirationInSeconds: number, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<void> {
+    static setValue(namespace: string, key: string, value: any, expirationInSeconds?: number, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<void> {
 
         if (encrypted) {
             value = DataUtils.encrypt(JSON.stringify(value));
@@ -58,7 +58,7 @@ export class KVService {
         return KVService._provider.hasValue(namespace, key);
     }
 
-    static updateExpiration(namespace: string, key: string, expirationInSeconds: number): Promise<void> {
+    static updateExpiration(namespace: string, key: string, expirationInSeconds?: number): Promise<void> {
         return KVService._provider.updateExpiration(namespace, key, expirationInSeconds);
     }
 }

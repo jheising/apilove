@@ -58,7 +58,7 @@ export interface APIEndpointOptions {
     middleware?: ((req, res, next?) => void)[] | ((req, res, next) => void);
 
     // Specify a function here to handle the response yourself
-    successResponse?: (responseData:any, res) => void;
+    successResponse?: (responseData: any, res) => void;
 }
 
 export function APIEndpoint(options?: APIEndpointOptions) {
@@ -69,7 +69,9 @@ export function APIEndpoint(options?: APIEndpointOptions) {
             path: "/"
         });
 
-        let handlerData: HandlerData = get(target.constructor.prototype, `__handlerData.${key.toString()}`, {});
+        let targetStorage = target;
+
+        let handlerData: HandlerData = get(targetStorage, `__handlerData.${key.toString()}`, {});
 
         handlerData.handlerFunction = descriptor.value;
         handlerData.options = options;
@@ -84,7 +86,7 @@ export function APIEndpoint(options?: APIEndpointOptions) {
             set(handlerData, `handlerParameterData.${parameterIndex}.paramName`, parameterNames[parameterIndex]);
         }
 
-        set(target.constructor.prototype, `__handlerData.${key.toString()}`, handlerData);
+        set(targetStorage, `__handlerData.${key.toString()}`, handlerData);
     }
 }
 
@@ -206,7 +208,7 @@ export class APIResponse {
         return new APIResponse(req, res).withError(error, hapiOutput);
     }
 
-    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = [], successResponseHandler?: (responseData:any, res) => void) {
+    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = [], successResponseHandler?: (responseData: any, res) => void) {
         // Add the req, and res to the end arguments if the function wants it
         handlerArgs = handlerArgs.concat([this.req, this.res]);
 
@@ -223,12 +225,10 @@ export class APIResponse {
                     return;
                 }
 
-                if(!isNil(successResponseHandler))
-                {
-                    successResponseHandler(data, this. res);
+                if (!isNil(successResponseHandler)) {
+                    successResponseHandler(data, this.res);
                 }
-                else
-                {
+                else {
                     this.withSuccess(data, 200);
                 }
             }).catch((error: any) => {
@@ -277,7 +277,7 @@ export class APIResponse {
 export class APIBase {
     app = express.Router();
 
-    private _createHandlerWrapperFunction(handlerData: HandlerData) {
+    private _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
 
         return (req, res) => {
             let apiResponse = new APIResponse(req, res);
@@ -311,10 +311,9 @@ export class APIBase {
                     for (let paramSource of paramSources) {
 
                         if (paramSource === "any") {
-                            paramValue = Utils.coalesce(get(req, "params",{})[paramName], get(req, "query",{})[paramName], get(req, "cookie",{})[paramName], req.header(paramName));
+                            paramValue = Utils.coalesce(get(req, "params", {})[paramName], get(req, "query", {})[paramName], get(req, "cookie", {})[paramName], req.header(paramName));
                         }
-                        else
-                        {
+                        else {
                             paramValue = get(req, paramSource);
                         }
 
@@ -372,12 +371,16 @@ export class APIBase {
                 return;
             }
 
-            apiResponse.processHandlerFunction(this, handlerData.handlerFunction, handlerArgs, handlerData.options.successResponse);
+            apiResponse.processHandlerFunction(thisObject, handlerData.handlerFunction, handlerArgs, handlerData.options.successResponse);
         };
     }
 
     constructor() {
-        each(this.constructor.prototype.__handlerData, (handlerData: HandlerData) => {
+
+        let staticHandlers = get(this, "constructor.__handlerData");
+        let instanceHandlers = get(this, "constructor.prototype.__handlerData");
+
+        let processHandler = (handlerData: HandlerData, thisObject) => {
             let options: APIEndpointOptions = handlerData.options;
             let argsArray: any[] = [options.path];
 
@@ -385,9 +388,12 @@ export class APIBase {
                 argsArray = argsArray.concat(castArray(options.middleware));
             }
 
-            let handlerWrapper = this._createHandlerWrapperFunction(handlerData);
+            let handlerWrapper = this._createHandlerWrapperFunction(handlerData, thisObject);
             argsArray.push(handlerWrapper);
             this.app[options.method.toLowerCase()].apply(this.app, argsArray);
-        });
+        };
+
+        each(staticHandlers, (handlerData) => processHandler(handlerData, this.constructor));
+        each(instanceHandlers, (handlerData) => processHandler(handlerData, this));
     }
 }

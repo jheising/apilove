@@ -8,9 +8,9 @@ export declare abstract class KVServiceProvider {
 export declare class KVService {
     private static _providerInstance;
     private static readonly _provider;
-    static setValue(namespace: string, key: string, value: any, expirationInSeconds: number, encrypted?: boolean): Promise<void>;
+    static setValue(namespace: string, key: string, value: any, expirationInSeconds?: number, encrypted?: boolean): Promise<void>;
     static getValue(namespace: string, key: string, defaultValue?: any, encrypted?: boolean): Promise<any>;
     static deleteValue(namespace: string, key: string): Promise<void>;
     static hasValue(namespace: string, key: string): Promise<boolean>;
-    static updateExpiration(namespace: string, key: string, expirationInSeconds: number): Promise<void>;
+    static updateExpiration(namespace: string, key: string, expirationInSeconds?: number): Promise<void>;
 }

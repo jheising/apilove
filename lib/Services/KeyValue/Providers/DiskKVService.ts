@@ -4,6 +4,8 @@ import {DiskFileService} from "../../File/Providers/DiskFileService";
 import {APIConfig} from "../../../APIConfig";
 import slugify from "slugify";
 
+slugify.extend({"/": ":"});
+
 export class DiskKVService extends KVServiceProvider {
     private static _fileServiceInstance: DiskFileService
 
