@@ -1,3 +1,4 @@
+import { APIConfig } from "./lib/APIConfig";
 import { APIUtils } from "./lib/APIUtils";
 import "reflect-metadata";
 import { APIResponse } from "./lib/APIResponse";
@@ -65,6 +66,7 @@ export interface APIEndpointOptions {
     successResponse?: (responseData: any, res: any) => void;
 }
 export declare function APIEndpoint(options?: APIEndpointOptions): (target: any, key: any, descriptor: any) => void;
+export { APIConfig };
 export { APIError };
 export { APIResponse };
 export { APIUtils };

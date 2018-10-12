@@ -64,8 +64,8 @@ We include a sample serverless.yml configuration which allows you to fully deplo
 ### handy services
 We include some standard service libraries that make building APIs even easier:
 
-- Key-Value Storage: A generic key-value storage service (with TTL) that will store values in memory while in development, but can/will automatically switch to DynamoDB when deployed to AWS.
-- More coming soon.
+- Key-Value Storage: A generic key-value storage service (with TTL) that will store values in memory or disk while in development, but can/will automatically switch to DynamoDB when deployed to AWS.
+- File Storage: A generic file storage service that will allow you store files on local disk or on S3 with the flip of an environment variable
 
 ## docs
 

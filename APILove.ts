@@ -334,6 +334,7 @@ export function APIEndpoint(options?: APIEndpointOptions) {
 }
 
 // Re-export stuff
+export {APIConfig};
 export {APIError};
 export {APIResponse};
 export {APIUtils};

@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const lodash_1 = require("lodash");
 const APIConfig_1 = require("./lib/APIConfig");
+exports.APIConfig = APIConfig_1.APIConfig;
 const path = require("path");
 const APIUtils_1 = require("./lib/APIUtils");
 exports.APIUtils = APIUtils_1.APIUtils;
