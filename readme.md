@@ -10,7 +10,7 @@ A no-nonsense framework for creating server(less) APIs in TypeScript — api♥�
 TypeScript decorators make building routes, parameters, and validation a breeze (don't worry, you still have access to all of the underlying raw express.js req, res objects if you want them).
 
 ```typescript
-export class SampleAPI extends APIBase {
+export class SampleAPI {
     
     @APIEndpoint({path: "/foo"})
     fooX(@APIParameter({default: "bar"}) what: string, req?, res?): Promise<any> {
@@ -70,12 +70,12 @@ We include some standard service libraries that make building APIs even easier:
 ## docs
 
 ### building your api
-An apilove API is simply any TypeScript class which extends the `APIBase` class, and decorated methods that return a Promise.
+An apilove API is simply any TypeScript class with decorated methods that return a Promise.
 
 ```typescript
-import {APIBase, APIEndpoint, APIParameter} from "apilove";
+import {APIEndpoint, APIParameter} from "apilove";
 
-export class SampleAPI extends APIBase {
+export class SampleAPI {
 
     @APIEndpoint({path: "/foo"})
     simple(what: string): Promise<any> {
