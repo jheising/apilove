@@ -1,7 +1,12 @@
 import {isBoolean, isNil, toString, castArray, toNumber, isString} from "lodash";
 import * as getArguments from "function-arguments";
+import {APIConfig} from "./APIConfig";
+import * as crypto from "crypto";
+import slugify from "slugify";
 
-export class Utils {
+slugify.extend({"/": ":"});
+
+export class APIUtils {
 
     static getRawTypeName(obj) {
         return Object.prototype.toString.call(obj).slice(8, -1);
@@ -14,7 +19,7 @@ export class Utils {
         }
 
         let convertedValue;
-        let rawValueType = Utils.getRawTypeName(value);
+        let rawValueType = APIUtils.getRawTypeName(value);
 
         // No conversion needed
         if (rawValueType === convertToType) {
@@ -40,7 +45,7 @@ export class Utils {
                 break;
             }
             case "Boolean": {
-                convertedValue = Utils.toBoolean(value);
+                convertedValue = APIUtils.toBoolean(value);
                 break;
             }
             case "Number": {
@@ -91,13 +96,46 @@ export class Utils {
         return getArguments(fn);
     }
 
-    static shouldCallbackWithError(error: Error, callback: (error: Error, ...args: any[]) => void): boolean {
+    private static _IV_LENGTH = 16;
+    private static _CRYPTO_ALG = 'aes-256-cbc';
+    private static _HASH_ALG = 'sha256';
 
-        if (error) {
-            if (callback) callback(error);
-            return true;
-        }
+    static encrypt(text: string, password:string = APIConfig.ENCRYPTION_SECRET) {
+        let iv = crypto.randomBytes(this._IV_LENGTH);
+        let cipher = crypto.createCipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
+        let encrypted = cipher.update(text);
 
-        return false;
+        encrypted = Buffer.concat([encrypted, cipher.final()]);
+        return iv.toString('hex') + ':' + encrypted.toString('hex');
+    }
+
+    static decrypt(text: string, password:string = APIConfig.ENCRYPTION_SECRET) {
+        let textParts = text.split(':');
+        let iv = Buffer.from(textParts.shift(), 'hex');
+        let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+        let decipher = crypto.createDecipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
+        let decrypted = decipher.update(encryptedText);
+
+        decrypted = Buffer.concat([decrypted, decipher.final()]);
+        return decrypted.toString();
+    }
+
+    static slugify(text:string)
+    {
+        return slugify(text);
+    }
+
+    static hashString(text:string)
+    {
+        let shasum = crypto.createHash(this._HASH_ALG);
+        shasum.update(text);
+        return shasum.digest('hex');
+    }
+
+    static hashMD5(text:string)
+    {
+        let md5 = crypto.createHash('md5');
+        md5.update(text);
+        return md5.digest('hex');
     }
 }

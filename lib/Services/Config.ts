@@ -1,5 +1,5 @@
 import {isNil} from "lodash";
-import {Utils} from "../Utils";
+import {APIUtils} from "../APIUtils";
 import "reflect-metadata";
 
 export function EnvVarSync(target: any, key: string)
@@ -14,7 +14,7 @@ export function EnvVarSync(target: any, key: string)
 
         try
         {
-            target[key] = Utils.convertToType(envVar, paramType);
+            target[key] = APIUtils.convertToType(envVar, paramType);
         }
         catch (e) {
             console.error(`Unable to parse environment variable named ${key}`);

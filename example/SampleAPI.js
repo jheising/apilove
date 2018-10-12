@@ -13,12 +13,20 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const APILove_1 = require("../APILove");
-class SampleAPI extends APILove_1.APIBase {
+class SampleAPI {
     constructor() {
-        super(...arguments);
         this.blah = "yo!sddf";
     }
-    fooX(what, // This will be retrieved as a string from the URL
+    static staticFunc(what, // This will be retrieved as a string from the URL
+    data, // The body will be parsed and sent back here
+    req, // Access the raw express.js request
+    res // Access the raw express.js response
+    ) {
+        return new Promise((resolve, reject) => {
+            resolve(data);
+        });
+    }
+    instanceFunc(what, // This will be retrieved as a string from the URL
     data, // The body will be parsed and sent back here
     req, // Access the raw express.js request
     res // Access the raw express.js response
@@ -33,13 +41,24 @@ __decorate([
         method: "POST",
         path: "/foo/:what"
     }),
-    __param(1, APILove_1.APIParameter({
-        sources: "body",
-        includeFullSource: true
+    __param(0, APILove_1.APIParameter({
+        optional: true
     })),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object, Object, Object]),
     __metadata("design:returntype", Promise)
-], SampleAPI.prototype, "fooX", null);
+], SampleAPI.prototype, "instanceFunc", null);
+__decorate([
+    APILove_1.APIEndpoint({
+        method: "POST",
+        path: "/foo/:what"
+    }),
+    __param(1, APILove_1.APIParameter({
+        optional: true
+    })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], SampleAPI, "staticFunc", null);
 exports.SampleAPI = SampleAPI;
 //# sourceMappingURL=SampleAPI.js.map

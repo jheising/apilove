@@ -2,9 +2,8 @@ import {isNil} from "lodash";
 import {KVServiceProvider} from "../KVService";
 import {DiskFileService} from "../../File/Providers/DiskFileService";
 import {APIConfig} from "../../../APIConfig";
-import slugify from "slugify";
+import {APIUtils} from "../../../APIUtils";
 
-slugify.extend({"/": ":"});
 
 export class DiskKVService extends KVServiceProvider {
     private static _fileServiceInstance: DiskFileService
@@ -27,15 +26,15 @@ export class DiskKVService extends KVServiceProvider {
             expires: isNil(expirationInSeconds) ? undefined : Date.now() + expirationInSeconds * 1000,
         };
 
-        return DiskKVService._fileService.writeFile(`${slugify(namespace)}/${slugify(key)}.json`, JSON.stringify(data));
+        return DiskKVService._fileService.writeFile(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`, JSON.stringify(data));
     }
 
     hasValue(namespace: string, key: string):Promise<boolean> {
-        return DiskKVService._fileService.pathExists(`${slugify(namespace)}/${slugify(key)}.json`);
+        return DiskKVService._fileService.pathExists(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`);
     }
 
     private _getValue(namespace: string, key: string):Promise<{value:any, expires:number}> {
-        return DiskKVService._fileService.readFile(`${slugify(namespace)}/${slugify(key)}.json`).then((fileContents) => {
+        return DiskKVService._fileService.readFile(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`).then((fileContents) => {
             let data = JSON.parse(fileContents);
             return Promise.resolve(data);
         }).catch(() => {
@@ -61,7 +60,7 @@ export class DiskKVService extends KVServiceProvider {
     }
 
     deleteValue(namespace: string, key: string):Promise<void> {
-        return DiskKVService._fileService.deleteFile(`${slugify(namespace)}/${slugify(key)}.json`);
+        return DiskKVService._fileService.deleteFile(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`);
     }
 
     updateExpiration(namespace: string, key: string, expirationInSeconds: number):Promise<void> {

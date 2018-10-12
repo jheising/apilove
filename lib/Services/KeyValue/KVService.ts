@@ -1,6 +1,6 @@
 import {APIConfig} from "../../APIConfig";
-import {DataUtils} from "../../DataUtils";
 import {isNil} from "lodash";
+import {APIUtils} from "../../APIUtils";
 
 export abstract class KVServiceProvider {
     abstract setValue(namespace: string, key: string, value: any, expirationInSeconds: number): Promise<void>;
@@ -29,7 +29,7 @@ export class KVService {
     static setValue(namespace: string, key: string, value: any, expirationInSeconds?: number, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<void> {
 
         if (encrypted) {
-            value = DataUtils.encrypt(JSON.stringify(value));
+            value = APIUtils.encrypt(JSON.stringify(value));
         }
 
         return KVService._provider.setValue(namespace, key, value, expirationInSeconds);
@@ -43,7 +43,7 @@ export class KVService {
             }
 
             if (encrypted) {
-                value = JSON.parse(DataUtils.decrypt(value));
+                value = JSON.parse(APIUtils.decrypt(value));
             }
 
             return value;

@@ -2,10 +2,9 @@ import {FileServiceProvider} from "../FileService";
 import * as path from "path";
 import {APIConfig} from "../../../APIConfig";
 import * as fs from "fs-extra";
-import {Utils} from "../../../Utils";
 import {each} from "async";
-import {APIError} from "../../../APIBase";
 import * as util from "util";
+import {APIError} from "../../../APIError";
 
 export class DiskFileService implements FileServiceProvider {
     private readonly _rootPath: string;
