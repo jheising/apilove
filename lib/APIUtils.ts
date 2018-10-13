@@ -106,13 +106,13 @@ export class APIUtils {
         let encrypted = cipher.update(text);
 
         encrypted = Buffer.concat([encrypted, cipher.final()]);
-        return iv.toString('hex') + ':' + encrypted.toString('hex');
+        return iv.toString('base64') + ':' + encrypted.toString('base64');
     }
 
     static decrypt(text: string, password:string = APIConfig.ENCRYPTION_SECRET) {
         let textParts = text.split(':');
-        let iv = Buffer.from(textParts.shift(), 'hex');
-        let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+        let iv = Buffer.from(textParts.shift(), 'base64');
+        let encryptedText = Buffer.from(textParts.join(':'), 'base64');
         let decipher = crypto.createDecipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
         let decrypted = decipher.update(encryptedText);
 
@@ -129,13 +129,22 @@ export class APIUtils {
     {
         let shasum = crypto.createHash(this._HASH_ALG);
         shasum.update(text);
-        return shasum.digest('hex');
+        return shasum.digest('base64');
     }
 
     static hashMD5(text:string)
     {
         let md5 = crypto.createHash('md5');
         md5.update(text);
-        return md5.digest('hex');
+        return md5.digest('base64');
+    }
+
+    /**
+     * Creates an expiration date in seconds since UNIX epoch from now.
+     * @param expirationInSeconds
+     */
+    static createExpirationInSeconds(expirationInSeconds:number):number
+    {
+        return Math.floor(Date.now() / 1000) + expirationInSeconds;
     }
 }

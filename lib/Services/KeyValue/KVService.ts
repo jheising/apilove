@@ -28,6 +28,11 @@ export class KVService {
 
     static setValue(namespace: string, key: string, value: any, expirationInSeconds?: number, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<void> {
 
+        if(isNil(value))
+        {
+            return Promise.resolve();
+        }
+
         if (encrypted) {
             value = APIUtils.encrypt(JSON.stringify(value));
         }

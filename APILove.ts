@@ -334,6 +334,7 @@ export function APIEndpoint(options?: APIEndpointOptions) {
 }
 
 // Re-export stuff
+// TODO: do we need to reconsider this? Is this causing unneeded memory usage if none of these end up getting used?
 export {APIConfig};
 export {APIError};
 export {APIResponse};

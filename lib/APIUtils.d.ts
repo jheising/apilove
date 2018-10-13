@@ -12,4 +12,9 @@ export declare class APIUtils {
     static slugify(text: string): string;
     static hashString(text: string): string;
     static hashMD5(text: string): string;
+    /**
+     * Creates an expiration date in seconds since UNIX epoch from now.
+     * @param expirationInSeconds
+     */
+    static createExpirationInSeconds(expirationInSeconds: number): number;
 }
