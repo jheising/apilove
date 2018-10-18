@@ -46,8 +46,10 @@ export class APIResponse {
     }
 
     withError(error: any, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
-        if (isNil(error)) {
-            return false;
+
+        if(this.res.headersSent || isNil(error))
+        {
+            return;
         }
 
         let apiError: APIError;
@@ -68,6 +70,11 @@ export class APIResponse {
     }
 
     withSuccess(data?: any, statusCode: number = 200, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
+
+        if(this.res.headersSent)
+        {
+            return;
+        }
 
         let output = data;
 
