@@ -249,10 +249,13 @@ This feature becomes important when you run large APIs on Lambda— because Lamb
 #### APILove.start options
 ```typescript
 interface APILoveOptions {
-    
+
     // One or more APIs to allow apilove to load. Remember these are lazy-loaded.
     apis?: APILoaderDefinition[];
-    
+
+    // By default cookieParser and bodyParser will be loaded. You can set this to false to prevent those from loading. Defaults to true.
+    loadStandardMiddleware?: boolean;
+
     // Any other express.js middleware you want loaded before requests make it to apilove.
     middleware?: [];
 }

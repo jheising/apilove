@@ -33,8 +33,15 @@ export interface APILoaderDefinition {
 }
 
 export interface APILoveOptions {
+
+    // One or more APIs to allow apilove to load. Remember these are lazy-loaded.
     apis?: APILoaderDefinition[];
-    middleware?: any[];
+
+    // By default cookieParser and bodyParser will be loaded. You can set this to false to prevent those from loading. Defaults to true.
+    loadStandardMiddleware?: boolean;
+
+    // Any other express.js middleware you want loaded before requests make it to apilove.
+    middleware?: [];
 }
 
 function _createHandlerWrapperFunction(handlerData:HandlerData, thisObject) {
@@ -178,10 +185,13 @@ export class APILove {
 
     static start(options: APILoveOptions) {
 
-        this.app.use(cookieParser());
-        this.app.use(bodyParser.json());
-        this.app.use(bodyParser.urlencoded({extended: false}));
-        this.app.use(bodyParser.text());
+        if(options.loadStandardMiddleware === false)
+        {
+            this.app.use(cookieParser());
+            this.app.use(bodyParser.json());
+            this.app.use(bodyParser.urlencoded({extended: false}));
+            this.app.use(bodyParser.text());
+        }
 
         for (let mw of get(options, "middleware", [])) {
             this.app.use(mw);
