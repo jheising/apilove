@@ -127,7 +127,7 @@ function _loadAPI(apiRouter, apiDefinition) {
 }
 class APILove {
     static start(options) {
-        if (options.loadStandardMiddleware === false) {
+        if (options.loadStandardMiddleware !== false) {
             this.app.use(cookieParser());
             this.app.use(bodyParser.json());
             this.app.use(bodyParser.urlencoded({ extended: false }));

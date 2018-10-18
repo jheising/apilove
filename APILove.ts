@@ -185,7 +185,7 @@ export class APILove {
 
     static start(options: APILoveOptions) {
 
-        if(options.loadStandardMiddleware === false)
+        if(options.loadStandardMiddleware !== false)
         {
             this.app.use(cookieParser());
             this.app.use(bodyParser.json());
