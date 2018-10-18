@@ -41,7 +41,7 @@ export interface APILoveOptions {
     loadStandardMiddleware?: boolean;
 
     // Any other express.js middleware you want loaded before requests make it to apilove.
-    middleware?: [];
+    middleware?: any[];
 }
 
 function _createHandlerWrapperFunction(handlerData:HandlerData, thisObject) {

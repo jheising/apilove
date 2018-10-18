@@ -14,7 +14,7 @@ export interface APILoaderDefinition {
 export interface APILoveOptions {
     apis?: APILoaderDefinition[];
     loadStandardMiddleware?: boolean;
-    middleware?: [];
+    middleware?: any[];
 }
 export declare class APILove {
     static app: any;
