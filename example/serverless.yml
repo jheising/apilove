@@ -1,9 +1,14 @@
 service: ${file(APIDeploymentConfig.json):SERVICE_NAME, "my-api-service"}
 
+plugins:
+  - serverless-api-compression
+
 custom:
   NODE_ENV:
     dev: development
     prod: production
+    contentEncoding:
+      contentCompression: 100 # Minimum body size required for compression in bytes
 
 provider:
   name: aws
