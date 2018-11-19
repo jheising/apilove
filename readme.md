@@ -282,6 +282,16 @@ The quickest way to get started is:
 1. Modify [APIHandler.ts](./example/APIHandler.ts) to load your APIs.
 1. Run and/or debug APIHandler.js (assuming you've compiled your TypeScript) on your local machine (or even deploy to a server).
 
+**Note: You must enable the emitDecoratorMetadata option in your typescript config (tsconfig.json)**
+
+```json
+{
+  "compilerOptions": {
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
 ### deployment
 Deploying apilove APIs with [serverless](https://serverless.com/) is a breeze. We've included a sample server.yml file in [./example/serverless.yml](./example/serverless.yml).
 
