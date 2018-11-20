@@ -1,5 +1,5 @@
 import { KVServiceProvider } from "../KVService";
-export declare class DynamoDBKVStorage extends KVServiceProvider {
+export declare class DynamoDBKVService extends KVServiceProvider {
     private static _dynamoClient;
     static readonly dynamoClient: any;
     setValue(namespace: string, key: string, value: any, expirationInSeconds: number): Promise<void>;

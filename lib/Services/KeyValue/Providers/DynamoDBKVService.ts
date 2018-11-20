@@ -3,15 +3,15 @@ import {isNil, get} from "lodash";
 import * as aws from "aws-sdk";
 import {APIConfig} from "../../../APIConfig";
 
-export class DynamoDBKVStorage extends KVServiceProvider
+export class DynamoDBKVService extends KVServiceProvider
 {
     private static _dynamoClient;
     static get dynamoClient() {
-        if (!DynamoDBKVStorage._dynamoClient) {
-            DynamoDBKVStorage._dynamoClient = new aws.DynamoDB();
+        if (!DynamoDBKVService._dynamoClient) {
+            DynamoDBKVService._dynamoClient = new aws.DynamoDB();
         }
 
-        return DynamoDBKVStorage._dynamoClient;
+        return DynamoDBKVService._dynamoClient;
     }
 
     setValue(namespace:string, key:string, value:any, expirationInSeconds:number):Promise<void>
@@ -37,7 +37,7 @@ export class DynamoDBKVStorage extends KVServiceProvider
             data.expires.N = Math.round(Date.now() / 1000 + expirationInSeconds).toString();
         }
 
-        return DynamoDBKVStorage.dynamoClient.putItem({
+        return DynamoDBKVService.dynamoClient.putItem({
             Item: data,
             TableName: APIConfig.DYNAMO_KV_STORAGE_TABLE_NAME,
             ReturnConsumedCapacity: "NONE"
@@ -51,7 +51,7 @@ export class DynamoDBKVStorage extends KVServiceProvider
 
     getValue(namespace:string, key:string):Promise<any>
     {
-        return DynamoDBKVStorage.dynamoClient.getItem({
+        return DynamoDBKVService.dynamoClient.getItem({
             Key: {
                 namespace: {
                     S: namespace
@@ -87,7 +87,7 @@ export class DynamoDBKVStorage extends KVServiceProvider
 
     deleteValue(namespace:string, key:string):Promise<void>
     {
-        return DynamoDBKVStorage.dynamoClient.deleteItem({
+        return DynamoDBKVService.dynamoClient.deleteItem({
             Key: {
                 namespace: {
                     S: namespace
@@ -103,7 +103,7 @@ export class DynamoDBKVStorage extends KVServiceProvider
 
     updateExpiration(namespace:string, key:string, expirationInSeconds:number):Promise<void>
     {
-        return DynamoDBKVStorage.dynamoClient.updateItem({
+        return DynamoDBKVService.dynamoClient.updateItem({
             ExpressionAttributeNames: {
                 "#AT": "expires"
             },

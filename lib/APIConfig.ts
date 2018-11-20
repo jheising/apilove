@@ -44,7 +44,7 @@ export class APIConfig {
 
     // This is the key-value storage service provider to use with your API (if you need it)
     @EnvVarSync
-    static KV_STORAGE_SERVICE_PROVIDER: "MemoryKVService" | "DiskKVService" | "DynamoDBKVStorage" = "DiskKVService";
+    static KV_STORAGE_SERVICE_PROVIDER: "MemoryKVService" | "DiskKVService" | "DynamoDBKVService" = "DiskKVService";
 
     // The storage path to be used when using the DiskKVService
     @EnvVarSync

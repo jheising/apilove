@@ -38,7 +38,7 @@ export class DiskFileService implements FileServiceProvider {
         return this._isInvalidFilePath(filePath)
             .then(() => util.promisify(fs.readFile)(filePath))
             .then((fileContents) => fileContents.toString())
-            .catch((error) => Promise.reject(error.code === "ENOENT" ? APIError.create404NotFoundError() : error));;
+            .catch((error) => Promise.reject(error.code === "ENOENT" ? APIError.create404NotFoundError() : error));
     }
 
     pathExists(relativePath: string): Promise<boolean> {
@@ -48,7 +48,9 @@ export class DiskFileService implements FileServiceProvider {
 
     deleteFile(relativePath: string): Promise<void> {
         let filePath = path.join(this._rootPath, relativePath);
-        return this._isInvalidFilePath(filePath).then(() => util.promisify(fs.unlink)(filePath));
+        return this._isInvalidFilePath(filePath)
+            .then(() => util.promisify(fs.unlink)(filePath))
+            .catch((error) => Promise.reject(error.code === "ENOENT" ? APIError.create404NotFoundError() : error));
     }
 
     listDirectoriesInPath(relativePath: string): Promise<string[]> {

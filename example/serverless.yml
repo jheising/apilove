@@ -25,7 +25,7 @@ provider:
 # Override this value if you want to use a custom domain name
     API_URL_BASE: { "Fn::Join" : ["", [ "https://", { "Ref" : "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}" ] ]  }
 # Uncomment if you want DynamoDB support for key-value storage
-#    KV_STORAGE_SERVICE_PROVIDER: "DynamoDBKVStorage"
+#    KV_STORAGE_SERVICE_PROVIDER: "DynamoDBKVService"
 #    DYNAMO_KV_STORAGE_TABLE_NAME: ${self:service}-kv-storage
 #  iamRoleStatements:
 #  - Effect: "Allow"
@@ -69,10 +69,6 @@ functions:
 #          AttributeType: S
 #        - AttributeName: key
 #          AttributeType: S
-#        - AttributeName: value
-#          AttributeType: S
-#        - AttributeName: expires
-#          AttributeType: N
 #        KeySchema:
 #        - AttributeName: namespace
 #          KeyType: HASH

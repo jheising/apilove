@@ -9,7 +9,7 @@ export declare class APIConfig {
     static OUTPUT_HAPI_RESULTS: boolean;
     static AWS_REGION: string;
     static ENCRYPTION_SECRET: string;
-    static KV_STORAGE_SERVICE_PROVIDER: "MemoryKVService" | "DiskKVService" | "DynamoDBKVStorage";
+    static KV_STORAGE_SERVICE_PROVIDER: "MemoryKVService" | "DiskKVService" | "DynamoDBKVService";
     static DISK_KV_STORAGE_ROOT_PATH: string;
     static ENCRYPT_KV_DATA: boolean;
     static DYNAMO_KV_STORAGE_TABLE_NAME: string;
