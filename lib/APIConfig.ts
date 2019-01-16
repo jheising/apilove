@@ -66,5 +66,5 @@ export class APIConfig {
     static DISK_FILE_SERVICE_ROOT_PATH: string = "./data";
 
     @EnvVarSync
-    static S3_FILE_SERVICE_ROOT_PATH: string;
+    static S3_FILE_SERVICE_BUCKET_NAME: string;
 }

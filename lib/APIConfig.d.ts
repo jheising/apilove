@@ -15,5 +15,5 @@ export declare class APIConfig {
     static DYNAMO_KV_STORAGE_TABLE_NAME: string;
     static FILE_STORAGE_SERVICE_PROVIDER: "DiskFileService" | "S3FileService";
     static DISK_FILE_SERVICE_ROOT_PATH: string;
-    static S3_FILE_SERVICE_ROOT_PATH: string;
+    static S3_FILE_SERVICE_BUCKET_NAME: string;
 }

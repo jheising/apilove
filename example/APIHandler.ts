@@ -1,4 +1,4 @@
-import {APILove} from "../APILove";
+import {APILove} from "apilove";
 
 // This is the only part that is required.
 module.exports.handler = APILove.start({

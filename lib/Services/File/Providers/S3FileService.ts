@@ -1,9 +1,11 @@
-import {FileService} from "../FileService";
-import * as path from "path";
 import * as aws from "aws-sdk";
+import {FileServiceProvider} from "../FileService";
 import {APIConfig} from "../../../APIConfig";
+import {each} from "async";
+import {get} from "lodash";
 
-/*export class S3FileService implements FileService {
+export class S3FileService implements FileServiceProvider {
+    private readonly _bucketName: string;
 
     private static _s3Client;
     static get s3Client() {
@@ -14,55 +16,79 @@ import {APIConfig} from "../../../APIConfig";
         return S3FileService._s3Client;
     }
 
-    writeFile(relativePath: string, contents: string, callback: (error?: Error) => void) {
-        S3FileService.s3Client.putObject({
-            Bucket: APIConfig.S3_FILE_SERVICE_ROOT_PATH,
+    constructor(bucketName: string = APIConfig.S3_FILE_SERVICE_BUCKET_NAME) {
+        this._bucketName = bucketName;
+    }
+
+    writeFile(relativePath: string, contents: string): Promise<void> {
+        let params = {
+            Bucket: this._bucketName,
             Key: relativePath,
             Body: contents
-        }, function (err, data) {
-            MaskedError.processCallback(err, callback);
-        });
+        };
+        return S3FileService.s3Client.putObject(params).promise();
     }
 
-    readFile(relativePath: string, callback: (error: Error, contents: string) => void) {
-        S3FileService.s3Client.getObject({
+    readFile(relativePath: string): Promise<string> {
+        let params = {
             Bucket: this._bucketName,
             Key: relativePath
-        }, function (err, data) {
-            if (MaskedError.shouldCallbackWithError(err, callback)) return;
-            if (callback) callback(null, data.Body.toString());
+        };
+        return S3FileService.s3Client.getObject(params).promise().then(data => {
+            return data.Body.toString("utf-8");
         });
     }
 
-    fileExists(relativePath: string, callback: (error: Error, exists: boolean) => void)
-    {
-        S3FileService.s3Client.headObject({
+    pathExists(relativePath: string): Promise<boolean> {
+        let params = {
+            Bucket: this._bucketName,
+            Prefix: relativePath,
+            MaxKeys: 1
+        };
+        return S3FileService.s3Client.listObjectsV2(params).promise().then(data => {
+            return data.KeyCount > 0;
+        }).catch(error => {
+            return false;
+        });
+    }
+
+    deleteFile(relativePath: string): Promise<void> {
+        let params = {
             Bucket: this._bucketName,
             Key: relativePath
-        }, function (err, data) {
-            callback(null, !(err || _.isNil(data)));
-        });
+        };
+        return S3FileService.s3Client.deleteObject(params).promise();
     }
 
-    listDirectoriesInPath(relativePath: string, callback: (error: Error, directories: string[]) => void) {
-        relativePath = path.join(relativePath, "/");
+    listDirectoriesInPath(relativePath: string): Promise<string[]> {
 
-        S3FileService.s3Client.listObjectsV2({
+        // Append a / if there isn't one
+        if(!(/\/$/.test(relativePath)))
+        {
+            relativePath += "/";
+        }
+
+        let params = {
             Bucket: this._bucketName,
-            Delimiter: '/',
+            Delimiter: "/",
             Prefix: relativePath
-        }, function (err, data) {
+        };
+        return S3FileService.s3Client.listObjectsV2(params).promise().then(data => {
+            let dirs:string[] = [];
 
-            if (MaskedError.shouldCallbackWithError(err, callback)) return;
+            let commonPrefixes = get(data, "CommonPrefixes", []);
 
-            let directories = [];
+            for(let commonPrefix of commonPrefixes)
+            {
+                let dirName:string = commonPrefix.Prefix.replace(relativePath, "");
 
-            for (let key of data.CommonPrefixes) {
-                let pathElements = path.relative(relativePath, key.Prefix).split("/");
-                directories.push(pathElements[0]);
+                if(/.+\/$/.test(dirName))
+                {
+                    dirs.push(dirName.replace(/(.+)\/$/, "$1"));
+                }
             }
 
-            if(callback) callback(null, directories);
+            return dirs;
         });
     }
-}*/
+}
