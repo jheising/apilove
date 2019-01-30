@@ -60,7 +60,12 @@ export class DiskKVService extends KVServiceProvider {
     }
 
     deleteValue(namespace: string, key: string):Promise<void> {
-        return DiskKVService._fileService.deleteFile(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`);
+        try {
+            return DiskKVService._fileService.deleteFile(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`);
+        }
+        // Ignore any errors
+        catch (e) {
+        }
     }
 
     updateExpiration(namespace: string, key: string, expirationInSeconds: number):Promise<void> {

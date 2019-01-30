@@ -34,6 +34,7 @@ export class S3FileService implements FileServiceProvider {
             Bucket: this._bucketName,
             Key: relativePath
         };
+
         return S3FileService.s3Client.getObject(params).promise().then(data => {
             return data.Body.toString("utf-8");
         });
