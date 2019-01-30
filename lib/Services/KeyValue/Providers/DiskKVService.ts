@@ -65,6 +65,7 @@ export class DiskKVService extends KVServiceProvider {
         }
         // Ignore any errors
         catch (e) {
+            return Promise.resolve();
         }
     }
 
