@@ -15,6 +15,7 @@ export interface APILoveOptions {
     apis?: APILoaderDefinition[];
     loadStandardMiddleware?: boolean;
     middleware?: any[];
+    defaultErrorHandler?: (error: any, req: any, res: any, next: any) => void;
 }
 export declare class APILove {
     static app: any;

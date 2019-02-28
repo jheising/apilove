@@ -1,6 +1,7 @@
 import {APIConfig} from "../../APIConfig";
 
 export abstract class FileServiceProvider {
+    abstract copyFile(fromRelativePath: string, toRelativePath: string):Promise<void>;
     abstract writeFile(relativePath: string, contents: string):Promise<void>;
     abstract readFile(relativePath: string):Promise<string>;
     abstract listDirectoriesInPath(relativePath: string):Promise<string[]>;
@@ -18,6 +19,10 @@ export class FileService {
         }
 
         return FileService._providerInstance;
+    }
+
+    static copyFile(fromRelativePath: string, toRelativePath: string):Promise<void> {
+        return FileService._provider.copyFile(fromRelativePath, toRelativePath);
     }
 
     static writeFile(relativePath: string, contents: string):Promise<void> {

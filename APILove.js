@@ -158,11 +158,16 @@ class APILove {
                 this.app.use(api.apiPath, apiRouter);
             }
         }
-        // Default error handler
-        this.app.use((error, req, res, next) => {
-            let apiResponse = new APIResponse_1.APIResponse(res, res);
-            apiResponse.withError(error);
-        });
+        // Setup our default error handler
+        if (!lodash_1.isNil(options.defaultErrorHandler)) {
+            this.app.use(options.defaultErrorHandler);
+        }
+        else {
+            this.app.use((error, req, res, next) => {
+                let apiResponse = new APIResponse_1.APIResponse(res, res);
+                apiResponse.withError(error);
+            });
+        }
         if (APIConfig_1.APIConfig.RUN_AS_SERVER) {
             this.app.listen(APIConfig_1.APIConfig.WEB_PORT, () => console.log(`API listening on port ${APIConfig_1.APIConfig.WEB_PORT}`));
             return this.app;

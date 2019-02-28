@@ -92,4 +92,13 @@ export class S3FileService implements FileServiceProvider {
             return dirs;
         });
     }
+
+    copyFile(fromRelativePath: string, toRelativePath: string): Promise<void> {
+        let params = {
+            Bucket: this._bucketName,
+            CopySource: fromRelativePath,
+            Key: toRelativePath
+        };
+        return S3FileService.s3Client.copyObject(params).promise();
+    }
 }

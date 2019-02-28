@@ -90,4 +90,12 @@ export class DiskFileService implements FileServiceProvider {
                 });
         });
     }
+
+    copyFile(fromRelativePath: string, toRelativePath: string): Promise<void> {
+        return this._isInvalidFilePath(toRelativePath).then(() => {
+
+            return util.promisify(fs.copy)(fromRelativePath, toRelativePath);
+
+        });
+    }
 }

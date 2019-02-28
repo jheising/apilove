@@ -258,6 +258,9 @@ interface APILoveOptions {
 
     // Any other express.js middleware you want loaded before requests make it to apilove.
     middleware?: [];
+    
+    // Override default express.js and APILove error handling
+    defaultErrorHandler?: (error, req, res, next) => void;
 }
 
 interface APILoaderDefinition {

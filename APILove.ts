@@ -42,6 +42,9 @@ export interface APILoveOptions {
 
     // Any other express.js middleware you want loaded before requests make it to apilove.
     middleware?: any[];
+
+    // Override default express.js and APILove error handling
+    defaultErrorHandler?: (error, req, res, next) => void;
 }
 
 function _createHandlerWrapperFunction(handlerData:HandlerData, thisObject) {
@@ -225,11 +228,20 @@ export class APILove {
             }
         }
 
-        // Default error handler
-        this.app.use((error, req, res, next) => {
-            let apiResponse = new APIResponse(res, res);
-            apiResponse.withError(error);
-        });
+        // Setup our default error handler
+        if(!isNil(options.defaultErrorHandler))
+        {
+            this.app.use(options.defaultErrorHandler);
+        }
+        else
+        {
+            this.app.use((error, req, res, next) => {
+                let apiResponse = new APIResponse(res, res);
+                apiResponse.withError(error);
+            });
+        }
+
+
 
         if (APIConfig.RUN_AS_SERVER) {
             this.app.listen(APIConfig.WEB_PORT, () => console.log(`API listening on port ${APIConfig.WEB_PORT}`));

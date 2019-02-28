@@ -1,4 +1,5 @@
 export declare abstract class FileServiceProvider {
+    abstract copyFile(fromRelativePath: string, toRelativePath: string): Promise<void>;
     abstract writeFile(relativePath: string, contents: string): Promise<void>;
     abstract readFile(relativePath: string): Promise<string>;
     abstract listDirectoriesInPath(relativePath: string): Promise<string[]>;
@@ -8,6 +9,7 @@ export declare abstract class FileServiceProvider {
 export declare class FileService {
     private static _providerInstance;
     private static readonly _provider;
+    static copyFile(fromRelativePath: string, toRelativePath: string): Promise<void>;
     static writeFile(relativePath: string, contents: string): Promise<void>;
     static readFile(relativePath: string): Promise<string>;
     static listDirectoriesInPath(relativePath: string): Promise<string[]>;
