@@ -21,8 +21,8 @@ exports.APIFileService = FileService_1.FileService;
 const Config_1 = require("./lib/Services/Config");
 exports.EnvVarSync = Config_1.EnvVarSync;
 function _createHandlerWrapperFunction(handlerData, thisObject) {
-    return (req, res) => {
-        let apiResponse = new APIResponse_1.APIResponse(req, res);
+    return (req, res, next) => {
+        let apiResponse = new APIResponse_1.APIResponse(req, res, next);
         let handlerArgs = [];
         let validationErrors = [];
         // Loop through each parameter in our function and pull it from the request
@@ -167,8 +167,14 @@ class APILove {
         }
         else {
             this.app.use((error, req, res, next) => {
-                let apiResponse = new APIResponse_1.APIResponse(res, res);
-                apiResponse.withError(error);
+                if (error instanceof APIError_1.APIError) {
+                    let apiError = error;
+                    res.status(apiError.statusCode).send(APIConfig_1.APIConfig.OUTPUT_HAPI_RESULTS ? apiError.hapiOut() : apiError.out());
+                }
+                else {
+                    let apiResponse = new APIResponse_1.APIResponse(res, res, next);
+                    apiResponse.withError(error);
+                }
             });
         }
         if (APIConfig_1.APIConfig.RUN_AS_SERVER) {

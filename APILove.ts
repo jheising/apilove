@@ -50,9 +50,9 @@ export interface APILoveOptions {
     defaultRouteHandler?: (req, res) => void;
 }
 
-function _createHandlerWrapperFunction(handlerData:HandlerData, thisObject) {
-    return (req, res) => {
-        let apiResponse = new APIResponse(req, res);
+function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
+    return (req, res, next) => {
+        let apiResponse = new APIResponse(req, res, next);
 
         let handlerArgs = [];
         let validationErrors: { parameter: string, message: string }[] = [];
@@ -83,8 +83,7 @@ function _createHandlerWrapperFunction(handlerData:HandlerData, thisObject) {
                 ) {
                     paramValue = paramValues;
                     break;
-                }
-                else {
+                } else {
                     if (has(paramValues, paramName)) {
                         paramValue = paramValues[paramName];
                         break;
@@ -97,8 +96,7 @@ function _createHandlerWrapperFunction(handlerData:HandlerData, thisObject) {
             if (paramOptions.processor) {
                 try {
                     argValue = paramOptions.processor(argValue, req);
-                }
-                catch (error) {
+                } catch (error) {
                     validationErrors.push({
                         parameter: paramName,
                         message: error.message || error.toString()
@@ -148,8 +146,7 @@ function _loadAPI(apiRouter, apiDefinition: APILoaderDefinition) {
     let apiModule;
     try {
         apiModule = require(path.resolve(process.cwd(), apiDefinition.require));
-    }
-    catch (e) {
+    } catch (e) {
         console.error(e);
         return null;
     }
@@ -191,8 +188,7 @@ export class APILove {
 
     static start(options: APILoveOptions) {
 
-        if(options.loadStandardMiddleware !== false)
-        {
+        if (options.loadStandardMiddleware !== false) {
             this.app.use(cookieParser());
             this.app.use(bodyParser.json());
             this.app.use(bodyParser.urlencoded({extended: false}));
@@ -223,29 +219,31 @@ export class APILove {
 
                     apiRouter(req, res, next);
                 });
-            }
-            else {
+            } else {
                 let apiRouter = express.Router();
                 _loadAPI(apiRouter, api);
                 this.app.use(api.apiPath, apiRouter);
             }
         }
 
-        if(!isNil(options.defaultRouteHandler))
-        {
+        if (!isNil(options.defaultRouteHandler)) {
             this.app.use(options.defaultRouteHandler);
         }
 
         // Setup our default error handler
-        if(!isNil(options.defaultErrorHandler))
-        {
+        if (!isNil(options.defaultErrorHandler)) {
             this.app.use(options.defaultErrorHandler);
-        }
-        else
-        {
+        } else {
             this.app.use((error, req, res, next) => {
-                let apiResponse = new APIResponse(res, res);
-                apiResponse.withError(error);
+
+                if (error instanceof APIError) {
+                    let apiError = error as APIError;
+                    res.status(apiError.statusCode).send(APIConfig.OUTPUT_HAPI_RESULTS ? apiError.hapiOut() : apiError.out());
+                } else {
+                    let apiResponse = new APIResponse(res, res, next);
+                    apiResponse.withError(error);
+                }
+
             });
         }
 
@@ -253,8 +251,7 @@ export class APILove {
         if (APIConfig.RUN_AS_SERVER) {
             this.app.listen(APIConfig.WEB_PORT, () => console.log(`API listening on port ${APIConfig.WEB_PORT}`));
             return this.app;
-        }
-        else {
+        } else {
             let serverless = require("serverless-http");
             return serverless(this.app, {callbackWaitsForEmptyEventLoop: true});
         }

@@ -6,10 +6,12 @@ import {URL} from "url";
 export class APIResponse {
     req;
     res;
+    next;
 
-    constructor(req?, res?) {
+    constructor(req?, res?, next?) {
         this.req = req;
         this.res = res;
+        this.next = next;
     }
 
     static withError(req, res, error: any, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
@@ -66,7 +68,15 @@ export class APIResponse {
             console.error(JSON.stringify(apiError.out(true)));
         }
 
-        this.res.status(apiError.statusCode).send(hapiOutput ? apiError.hapiOut() : apiError.out());
+        if(this.next)
+        {
+            // Let the standard error handler handle it
+            this.next(apiError);
+        }
+        else
+        {
+            this.res.status(apiError.statusCode).send(hapiOutput ? apiError.hapiOut() : apiError.out());
+        }
     }
 
     withSuccess(data?: any, statusCode: number = 200, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
