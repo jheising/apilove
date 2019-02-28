@@ -261,6 +261,9 @@ interface APILoveOptions {
     
     // Override default express.js and APILove error handling
     defaultErrorHandler?: (error, req, res, next) => void;
+    
+    // This can be used to provide a default output for all requests. Useful to return a 404 or other default page.
+    defaultRouteHandler?: (req, res) => void;
 }
 
 interface APILoaderDefinition {

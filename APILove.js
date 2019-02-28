@@ -158,6 +158,9 @@ class APILove {
                 this.app.use(api.apiPath, apiRouter);
             }
         }
+        if (!lodash_1.isNil(options.defaultRouteHandler)) {
+            this.app.use(options.defaultRouteHandler);
+        }
         // Setup our default error handler
         if (!lodash_1.isNil(options.defaultErrorHandler)) {
             this.app.use(options.defaultErrorHandler);

@@ -45,6 +45,9 @@ export interface APILoveOptions {
 
     // Override default express.js and APILove error handling
     defaultErrorHandler?: (error, req, res, next) => void;
+
+    // This can be used to provide a default output for all requests. Useful to return a 404 or other default page.
+    defaultRouteHandler?: (req, res) => void;
 }
 
 function _createHandlerWrapperFunction(handlerData:HandlerData, thisObject) {
@@ -228,6 +231,11 @@ export class APILove {
             }
         }
 
+        if(!isNil(options.defaultRouteHandler))
+        {
+            this.app.use(options.defaultRouteHandler);
+        }
+
         // Setup our default error handler
         if(!isNil(options.defaultErrorHandler))
         {
@@ -240,7 +248,6 @@ export class APILove {
                 apiResponse.withError(error);
             });
         }
-
 
 
         if (APIConfig.RUN_AS_SERVER) {
