@@ -240,7 +240,7 @@ export class APILove {
                     let apiError = error as APIError;
                     res.status(apiError.statusCode).send(APIConfig.OUTPUT_HAPI_RESULTS ? apiError.hapiOut() : apiError.out());
                 } else {
-                    let apiResponse = new APIResponse(res, res, next);
+                    let apiResponse = new APIResponse(res, res);
                     apiResponse.withError(error);
                 }
 

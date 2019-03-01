@@ -172,7 +172,7 @@ class APILove {
                     res.status(apiError.statusCode).send(APIConfig_1.APIConfig.OUTPUT_HAPI_RESULTS ? apiError.hapiOut() : apiError.out());
                 }
                 else {
-                    let apiResponse = new APIResponse_1.APIResponse(res, res, next);
+                    let apiResponse = new APIResponse_1.APIResponse(res, res);
                     apiResponse.withError(error);
                 }
             });
