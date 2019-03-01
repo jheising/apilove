@@ -96,10 +96,8 @@ export class DiskFileService implements FileServiceProvider {
         let fromFilePath = path.join(this._rootPath, fromRelativePath);
         let toFilePath = path.join(this._rootPath, toRelativePath);
 
-        return this._isInvalidFilePath(toFilePath).then(() => {
-
-            return util.promisify(fs.copy)(fromFilePath, toFilePath);
-
-        });
+        return this._isInvalidFilePath(toFilePath)
+            .then(() => util.promisify(fs.copy)(fromFilePath, toFilePath))
+            .catch((error) => Promise.reject(error.code === "ENOENT" ? APIError.create404NotFoundError() : error));
     }
 }
