@@ -92,9 +92,13 @@ export class DiskFileService implements FileServiceProvider {
     }
 
     copyFile(fromRelativePath: string, toRelativePath: string): Promise<void> {
-        return this._isInvalidFilePath(toRelativePath).then(() => {
 
-            return util.promisify(fs.copy)(fromRelativePath, toRelativePath);
+        let fromFilePath = path.join(this._rootPath, fromRelativePath);
+        let toFilePath = path.join(this._rootPath, toRelativePath);
+
+        return this._isInvalidFilePath(toFilePath).then(() => {
+
+            return util.promisify(fs.copy)(fromFilePath, toFilePath);
 
         });
     }
