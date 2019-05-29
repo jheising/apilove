@@ -8,5 +8,6 @@ export declare class DiskFileService implements FileServiceProvider {
     pathExists(relativePath: string): Promise<boolean>;
     deleteFile(relativePath: string): Promise<void>;
     listDirectoriesInPath(relativePath: string): Promise<string[]>;
+    listFilesInPath(relativePath: string): Promise<string[]>;
     copyFile(fromRelativePath: string, toRelativePath: string): Promise<void>;
 }

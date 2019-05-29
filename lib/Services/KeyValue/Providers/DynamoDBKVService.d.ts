@@ -1,4 +1,4 @@
-import { KVServiceProvider } from "../KVService";
+import { KVServiceProvider, KVServiceValues } from "../KVService";
 export declare class DynamoDBKVService extends KVServiceProvider {
     private static _dynamoClient;
     static readonly dynamoClient: any;
@@ -7,4 +7,5 @@ export declare class DynamoDBKVService extends KVServiceProvider {
     getValue(namespace: string, key: string): Promise<any>;
     deleteValue(namespace: string, key: string): Promise<void>;
     updateExpiration(namespace: string, key: string, expirationInSeconds: number): Promise<void>;
+    getValues(namespace: string, page: number, pageSize: number): Promise<KVServiceValues>;
 }

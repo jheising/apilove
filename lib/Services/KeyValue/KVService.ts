@@ -2,10 +2,24 @@ import {APIConfig} from "../../APIConfig";
 import {isNil} from "lodash";
 import {APIUtils} from "../../APIUtils";
 
+export interface KVServiceValue {
+    key: string;
+    value: string;
+}
+
+export interface KVServiceValues {
+    values: KVServiceValue[];
+    totalCount: number;
+    totalPages: number;
+    page: number;
+}
+
 export abstract class KVServiceProvider {
     abstract setValue(namespace: string, key: string, value: any, expirationInSeconds: number): Promise<void>;
 
     abstract getValue(namespace: string, key: string): Promise<any>;
+
+    abstract getValues(namespace: string, page: number, pageSize: number): Promise<KVServiceValues>;
 
     abstract deleteValue(namespace: string, key: string): Promise<void>;
 
@@ -28,8 +42,7 @@ export class KVService {
 
     static setValue(namespace: string, key: string, value: any, expirationInSeconds?: number, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<void> {
 
-        if(isNil(value))
-        {
+        if (isNil(value)) {
             return Promise.resolve();
         }
 
@@ -52,6 +65,23 @@ export class KVService {
             }
 
             return value;
+        });
+    }
+
+    static getValues(namespace: string, page: number = 1, pageSize: number = 25, encrypted: boolean = APIConfig.ENCRYPT_KV_DATA): Promise<KVServiceValues> {
+        return KVService._provider.getValues(namespace, page, pageSize).then((values: KVServiceValues) => {
+
+            if (encrypted) {
+                for (let value of values.values) {
+                    try {
+                        value.value = JSON.parse(APIUtils.decrypt(value.value));
+                    } catch (e) {
+                        value.value = null;
+                    }
+                }
+            }
+
+            return values;
         });
     }
 

@@ -1,4 +1,4 @@
-import { KVServiceProvider } from "../KVService";
+import { KVServiceProvider, KVServiceValues } from "../KVService";
 export declare class DiskKVService extends KVServiceProvider {
     private static _fileServiceInstance;
     private static readonly _fileService;
@@ -8,4 +8,5 @@ export declare class DiskKVService extends KVServiceProvider {
     getValue(namespace: string, key: string): Promise<any>;
     deleteValue(namespace: string, key: string): Promise<void>;
     updateExpiration(namespace: string, key: string, expirationInSeconds: number): Promise<void>;
+    getValues(namespace: string, page: number, pageSize: number): Promise<KVServiceValues>;
 }

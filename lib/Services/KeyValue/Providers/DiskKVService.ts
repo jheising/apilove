@@ -1,5 +1,5 @@
 import {isNil} from "lodash";
-import {KVServiceProvider} from "../KVService";
+import {KVServiceProvider, KVServiceValues, KVServiceValue} from "../KVService";
 import {DiskFileService} from "../../File/Providers/DiskFileService";
 import {APIConfig} from "../../../APIConfig";
 import {APIUtils} from "../../../APIUtils";
@@ -22,6 +22,7 @@ export class DiskKVService extends KVServiceProvider {
     setValue(namespace: string, key: string, value: any, expirationInSeconds: number): Promise<void> {
 
         let data = {
+            key: key,
             value: value,
             expires: isNil(expirationInSeconds) ? undefined : Date.now() + expirationInSeconds * 1000,
         };
@@ -74,5 +75,49 @@ export class DiskKVService extends KVServiceProvider {
 
             return this.setValue(namespace, key, data.value, expirationInSeconds);
         });
+    }
+
+    async getValues(namespace: string, page: number, pageSize: number): Promise<KVServiceValues> {
+        let files = await DiskKVService._fileService.listFilesInPath(`${APIUtils.slugify(namespace)}`);
+
+        let values: KVServiceValue[] = [];
+        let totalCount = files.length;
+        let totalPages = Math.ceil(totalCount / pageSize);
+
+        if (page > 0 && page <= totalPages) {
+
+            let actions = [];
+            let startIndex = pageSize * (page - 1);
+            let endIndex = Math.min(startIndex + pageSize - 1, files.length - 1);
+
+            for(let index = startIndex; index <= endIndex; index++)
+            {
+                let filename = files[index];
+                actions.push(DiskKVService._fileService.readFile(`${APIUtils.slugify(namespace)}/${filename}`));
+            }
+
+            let results = await Promise.all(actions);
+
+            for(let result of results)
+            {
+                let parsedResult = JSON.parse(result);
+
+                if (parsedResult.expires && parsedResult.expires <= Date.now()) {
+                    continue;
+                }
+
+                values.push({
+                    key: parsedResult.key,
+                    value: parsedResult.value
+                });
+            }
+        }
+
+        return {
+            totalCount: totalCount,
+            totalPages: totalPages,
+            page: page,
+            values: values
+        };
     }
 }

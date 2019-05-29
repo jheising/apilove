@@ -91,6 +91,44 @@ export class DiskFileService implements FileServiceProvider {
         });
     }
 
+    listFilesInPath(relativePath: string): Promise<string[]> {
+        let directoryPath = path.join(this._rootPath, relativePath);
+        return this._isInvalidFilePath(directoryPath).then(() => {
+
+            return util.promisify(fs.readdir)(directoryPath)
+                .then((items) => {
+                    return new Promise<string[]>((resolve, reject) => {
+                        let files = [];
+
+                        each(items, function (item, callback) {
+                            fs.stat(path.join(directoryPath, item), function (err, stats) {
+                                if (!err && stats.isFile()) {
+                                    files.push(item);
+                                }
+
+                                callback();
+                            });
+                        }, (err) => {
+
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+
+                            resolve(files.sort());
+                        });
+                    });
+                })
+                .catch((error) => {
+                    if (error.code === "ENOENT") {
+                        return Promise.reject(APIError.create404NotFoundError());
+                    }
+
+                    return Promise.reject(error);
+                });
+        });
+    }
+
     copyFile(fromRelativePath: string, toRelativePath: string): Promise<void> {
 
         let fromFilePath = path.join(this._rootPath, fromRelativePath);

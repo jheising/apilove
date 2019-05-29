@@ -93,6 +93,10 @@ export class S3FileService implements FileServiceProvider {
         });
     }
 
+    listFilesInPath(relativePath: string): Promise<string[]> {
+        return Promise.reject("Not implemented");
+    }
+
     copyFile(fromRelativePath: string, toRelativePath: string): Promise<void> {
         let params = {
             Bucket: this._bucketName,
