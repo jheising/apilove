@@ -27,27 +27,31 @@ interface HandlerData {
 }
 
 export interface APILoaderDefinition {
+    // The root path to the API, like /users
     apiPath?: string;
+
+    // The path to the actual API code file
     require: string;
+
+    // The title of the module/class in the API code file to load
     moduleName?: string;
 }
 
-export interface APILoveOptions {
+export interface APILoveDocsOptions {
+    title?: string;
+    intro?: string;
+}
 
+export interface APILoveOptions {
     // One or more APIs to allow apilove to load. Remember these are lazy-loaded.
     apis?: APILoaderDefinition[];
 
     // By default cookieParser and bodyParser will be loaded. You can set this to false to prevent those from loading. Defaults to true.
     loadStandardMiddleware?: boolean;
 
-    // Any other express.js middleware you want loaded before requests make it to apilove.
-    middleware?: any[];
+    generateDocs?: boolean;
 
-    // Override default express.js and APILove error handling
-    defaultErrorHandler?: (error, req, res, next) => void;
-
-    // This can be used to provide a default output for all requests. Useful to return a 404 or other default page.
-    defaultRouteHandler?: (req, res) => void;
+    docs?: APILoveDocsOptions
 }
 
 function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
@@ -61,7 +65,7 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
         for (let index = 0; index < handlerData.handlerParameterNames.length; index++) {
             let paramData: HandlerParameterData = handlerData.handlerParameterData[index];
             let paramOptions: APIParameterOptions = get(paramData, "paramOptions", {});
-            let paramName = APIUtils.coalesce(paramOptions.rawName, handlerData.handlerParameterNames[index]);
+            let paramName = handlerData.handlerParameterNames[index];
 
             // Ignore request and response parameters if the function asks for it
             if ((index === handlerData.handlerParameterNames.length - 1 || index === handlerData.handlerParameterNames.length - 2) && ["req", "request", "res", "response"].indexOf(paramName.toLowerCase()) >= 0) {
@@ -78,32 +82,13 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
                     continue;
                 }
 
-                if (paramOptions.includeFullSource ||
-                    (/[\.\[\]]/g).test(paramSource) // If the source contains any of the characters ".[]" (ie a path), assume the developer meant to include the full source.
-                ) {
-                    paramValue = paramValues;
+                if (has(paramValues, paramName)) {
+                    paramValue = paramValues[paramName];
                     break;
-                } else {
-                    if (has(paramValues, paramName)) {
-                        paramValue = paramValues[paramName];
-                        break;
-                    }
                 }
             }
 
             let argValue = APIUtils.coalesce(paramValue, paramOptions.defaultValue);
-
-            if (paramOptions.processor) {
-                try {
-                    argValue = paramOptions.processor(argValue, req);
-                } catch (error) {
-                    validationErrors.push({
-                        parameter: paramName,
-                        message: error.message || error.toString()
-                    });
-                    continue;
-                }
-            }
 
             if (isNil(argValue)) {
 
@@ -137,12 +122,11 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
             return;
         }
 
-        apiResponse.processHandlerFunction(thisObject, handlerData.handlerFunction, handlerArgs, handlerData.options.successResponse);
+        apiResponse.processHandlerFunction(thisObject, handlerData.handlerFunction, handlerArgs);
     };
 }
 
-function _loadAPI(apiRouter, apiDefinition: APILoaderDefinition) {
-
+function _getAPIModule(apiDefinition: APILoaderDefinition) {
     let apiModule;
     try {
         apiModule = require(path.resolve(process.cwd(), apiDefinition.require));
@@ -156,15 +140,24 @@ function _loadAPI(apiRouter, apiDefinition: APILoaderDefinition) {
     }
 
     let moduleName = APIUtils.coalesce(apiDefinition.moduleName, path.basename(apiDefinition.require));
-    let apiClass = APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
+    return APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
+}
+
+function _loadAPI(apiRouter, apiDefinition: APILoaderDefinition) {
+
+    let apiModule = _getAPIModule(apiDefinition);
+
+    if (isNil(apiModule)) {
+        return null;
+    }
 
     let apiInstance;
 
-    each(get(apiClass, "__handlerData", {}), (handlerData: HandlerData, name) => {
+    each(get(apiModule, "__handlerData", {}), (handlerData: HandlerData, name) => {
 
         // If this is an instance function, we need to create an instance of the class
         if (handlerData.isInstance && isNil(apiInstance)) {
-            apiInstance = new apiClass();
+            apiInstance = new apiModule();
         }
 
         let options: APIEndpointOptions = handlerData.options;
@@ -175,18 +168,52 @@ function _loadAPI(apiRouter, apiDefinition: APILoaderDefinition) {
             argsArray = argsArray.concat(castArray(options.middleware));
         }
 
-        let handlerWrapper = _createHandlerWrapperFunction(handlerData, handlerData.isInstance ? apiInstance : apiClass);
+        let handlerWrapper = _createHandlerWrapperFunction(handlerData, handlerData.isInstance ? apiInstance : apiModule);
         argsArray.push(handlerWrapper);
 
         apiRouter[options.method.toLowerCase()].apply(apiRouter, argsArray);
     });
 }
 
+export interface APIMetaData
+{
+    apiOptions: APIOptions;
+    path: string;
+    endpointOptions: APIEndpointOptions[];
+}
+
 export class APILove {
 
     static app = express();
 
+    static getAPIMetadata(options: APILoveOptions):APIMetaData[]
+    {
+        let metaData:APIMetaData[] = [];
+
+        for (let api of get(options, "apis", []) as APILoaderDefinition[]) {
+            let apiModule = _getAPIModule(api);
+
+            let apiEndpoints = [];
+
+            each(get(apiModule, "__handlerData", {}), (endpoint) => {
+                apiEndpoints.push(endpoint.options);
+            });
+
+            metaData.push({
+                apiOptions: get(apiModule, "__apiOptions", {}),
+                path: api.apiPath,
+                endpointOptions: apiEndpoints
+            });
+        }
+
+        return metaData;
+    }
+
     static start(options: APILoveOptions) {
+
+        defaultsDeep(options, {
+            generateDocs: true
+        } as APILoveOptions);
 
         if (options.loadStandardMiddleware !== false) {
             this.app.use(cookieParser());
@@ -195,8 +222,18 @@ export class APILove {
             this.app.use(bodyParser.text());
         }
 
-        for (let mw of get(options, "middleware", [])) {
-            this.app.use(mw);
+        this.app.use((req, res, next) => {
+            req.APILove = {
+                options: options
+            };
+            next();
+        });
+
+        if (options.generateDocs) {
+            options.apis = [{
+                apiPath: "/",
+                require: "lib/APIDocs"
+            } as APILoaderDefinition].concat(options.apis);
         }
 
         // Here we load our APIs, but we only load them when requested
@@ -226,28 +263,6 @@ export class APILove {
             }
         }
 
-        if (!isNil(options.defaultRouteHandler)) {
-            this.app.use(options.defaultRouteHandler);
-        }
-
-        // Setup our default error handler
-        if (!isNil(options.defaultErrorHandler)) {
-            this.app.use(options.defaultErrorHandler);
-        } else {
-            this.app.use((error, req, res, next) => {
-
-                if (error instanceof APIError) {
-                    let apiError = error as APIError;
-                    res.status(apiError.statusCode).send(APIConfig.OUTPUT_HAPI_RESULTS ? apiError.hapiOut() : apiError.out());
-                } else {
-                    let apiResponse = new APIResponse(res, res);
-                    apiResponse.withError(error);
-                }
-
-            });
-        }
-
-
         if (APIConfig.RUN_AS_SERVER) {
             this.app.listen(APIConfig.WEB_PORT, () => console.log(`API listening on port ${APIConfig.WEB_PORT}`));
             return this.app;
@@ -256,6 +271,11 @@ export class APILove {
             return serverless(this.app, {callbackWaitsForEmptyEventLoop: true});
         }
     }
+}
+
+export interface APIParameterDocsOptions {
+    description?: string;
+    typeDescription?: string;
 }
 
 export interface APIParameterOptions {
@@ -271,37 +291,12 @@ export interface APIParameterOptions {
     defaultValue?: any;
 
     /**
-     * A synchronous function that can be used to transform an incoming parameter into something else. Can also be used as validation by throwing an error.
-     * You also get access to the raw express.js req object if you want it.
-     */
-    processor?: (value: any, req?) => any;
-
-    /**
      * One or more sources from which to look for this value. This is basically a path in the req object. So for example, a value of `query` would be equivalent to `req.query[myParamName]`
      * Multiple values can be defined, and whichever one results in a non-null value first will be used. Defaults to ["params", "query", "body", "cookie", "headers"].
      */
     sources?: string[] | string;
 
-    /**
-     * If set to true, the entire source will be returned instead of looking for a particular value. Defaults to false.
-     *
-     * Examples:
-     *
-     * The following would look for something named `userData` in the query params and return that.
-     * @APIParameter({sources:["query"]})
-     * userData:string
-     *
-     * The following would take all the query params and return them as an object
-     * @APIParameter({sources:["query"], includeFullSource:true})
-     * userData:{[paramName:string] : any}
-     */
-    includeFullSource?: boolean;
-
-    /**
-     * This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
-     * Examples usages might be when looking for a header like "content-type" or a parameter named "function"
-     */
-    rawName?: string;
+    docs?: APIParameterDocsOptions;
 }
 
 export function APIParameter(options: APIParameterOptions) {
@@ -315,6 +310,11 @@ export function APIParameter(options: APIParameterOptions) {
     }
 }
 
+export interface APIEndpointDocsOptions {
+    title?: string;
+    description?: string;
+}
+
 export interface APIEndpointOptions {
     // The method to be used when requesting this endpoint. Defaults to "get".
     method?: string;
@@ -325,8 +325,7 @@ export interface APIEndpointOptions {
     // Any express.js middleware functions you want to be executed before invoking this method. Useful for things like authentication.
     middleware?: ((req, res, next?) => void)[] | ((req, res, next) => void);
 
-    // Specify a function here to handle the response yourself
-    successResponse?: (responseData: any, res) => void;
+    docs?: APIEndpointDocsOptions;
 }
 
 export function APIEndpoint(options?: APIEndpointOptions) {
@@ -356,6 +355,21 @@ export function APIEndpoint(options?: APIEndpointOptions) {
         }
 
         set(theClass, `__handlerData.${key}`, handlerData);
+    }
+}
+
+export interface APIDocsOptions {
+    title?: string;
+    intro?: string;
+}
+
+export interface APIOptions {
+    docs?: APIDocsOptions;
+}
+
+export function API(options?: APIOptions) {
+    return function (constructor: Function) {
+        set(constructor, `__apiOptions`, options);
     }
 }
 

@@ -187,7 +187,7 @@ interface APIParameterOptions {
     includeFullSource?: boolean;
 
     /**
-     * This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
+     * This is the raw title of the parameter to look for in cases where the title can't be represented as a valid javascript variable title
      * Examples usages might be when looking for a header like "content-type" or a parameter named "function"
      */
     rawName?: string;

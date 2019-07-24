@@ -29,7 +29,7 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
         for (let index = 0; index < handlerData.handlerParameterNames.length; index++) {
             let paramData = handlerData.handlerParameterData[index];
             let paramOptions = lodash_1.get(paramData, "paramOptions", {});
-            let paramName = APIUtils_1.APIUtils.coalesce(paramOptions.rawName, handlerData.handlerParameterNames[index]);
+            let paramName = handlerData.handlerParameterNames[index];
             // Ignore request and response parameters if the function asks for it
             if ((index === handlerData.handlerParameterNames.length - 1 || index === handlerData.handlerParameterNames.length - 2) && ["req", "request", "res", "response"].indexOf(paramName.toLowerCase()) >= 0) {
                 continue;
@@ -41,32 +41,12 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
                 if (lodash_1.isNil(paramValues)) {
                     continue;
                 }
-                if (paramOptions.includeFullSource ||
-                    (/[\.\[\]]/g).test(paramSource) // If the source contains any of the characters ".[]" (ie a path), assume the developer meant to include the full source.
-                ) {
-                    paramValue = paramValues;
+                if (lodash_1.has(paramValues, paramName)) {
+                    paramValue = paramValues[paramName];
                     break;
-                }
-                else {
-                    if (lodash_1.has(paramValues, paramName)) {
-                        paramValue = paramValues[paramName];
-                        break;
-                    }
                 }
             }
             let argValue = APIUtils_1.APIUtils.coalesce(paramValue, paramOptions.defaultValue);
-            if (paramOptions.processor) {
-                try {
-                    argValue = paramOptions.processor(argValue, req);
-                }
-                catch (error) {
-                    validationErrors.push({
-                        parameter: paramName,
-                        message: error.message || error.toString()
-                    });
-                    continue;
-                }
-            }
             if (lodash_1.isNil(argValue)) {
                 // Is this parameter required?
                 if (!lodash_1.get(paramOptions, "optional", false)) {
@@ -92,10 +72,10 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
             apiResponse.withError(APIError_1.APIError.createValidationError(validationErrors));
             return;
         }
-        apiResponse.processHandlerFunction(thisObject, handlerData.handlerFunction, handlerArgs, handlerData.options.successResponse);
+        apiResponse.processHandlerFunction(thisObject, handlerData.handlerFunction, handlerArgs);
     };
 }
-function _loadAPI(apiRouter, apiDefinition) {
+function _getAPIModule(apiDefinition) {
     let apiModule;
     try {
         apiModule = require(path.resolve(process.cwd(), apiDefinition.require));
@@ -108,33 +88,67 @@ function _loadAPI(apiRouter, apiDefinition) {
         return null;
     }
     let moduleName = APIUtils_1.APIUtils.coalesce(apiDefinition.moduleName, path.basename(apiDefinition.require));
-    let apiClass = APIUtils_1.APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
+    return APIUtils_1.APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
+}
+function _loadAPI(apiRouter, apiDefinition) {
+    let apiModule = _getAPIModule(apiDefinition);
+    if (lodash_1.isNil(apiModule)) {
+        return null;
+    }
     let apiInstance;
-    lodash_1.each(lodash_1.get(apiClass, "__handlerData", {}), (handlerData, name) => {
+    lodash_1.each(lodash_1.get(apiModule, "__handlerData", {}), (handlerData, name) => {
         // If this is an instance function, we need to create an instance of the class
         if (handlerData.isInstance && lodash_1.isNil(apiInstance)) {
-            apiInstance = new apiClass();
+            apiInstance = new apiModule();
         }
         let options = handlerData.options;
         let argsArray = [options.path];
         if (options.middleware) {
             argsArray = argsArray.concat(lodash_1.castArray(options.middleware));
         }
-        let handlerWrapper = _createHandlerWrapperFunction(handlerData, handlerData.isInstance ? apiInstance : apiClass);
+        let handlerWrapper = _createHandlerWrapperFunction(handlerData, handlerData.isInstance ? apiInstance : apiModule);
         argsArray.push(handlerWrapper);
         apiRouter[options.method.toLowerCase()].apply(apiRouter, argsArray);
     });
 }
 class APILove {
+    static getAPIMetadata(options) {
+        let metaData = [];
+        for (let api of lodash_1.get(options, "apis", [])) {
+            let apiModule = _getAPIModule(api);
+            let apiEndpoints = [];
+            lodash_1.each(lodash_1.get(apiModule, "__handlerData", {}), (endpoint) => {
+                apiEndpoints.push(endpoint.options);
+            });
+            metaData.push({
+                apiOptions: lodash_1.get(apiModule, "__apiOptions", {}),
+                path: api.apiPath,
+                endpointOptions: apiEndpoints
+            });
+        }
+        return metaData;
+    }
     static start(options) {
+        lodash_1.defaultsDeep(options, {
+            generateDocs: true
+        });
         if (options.loadStandardMiddleware !== false) {
             this.app.use(cookieParser());
             this.app.use(bodyParser.json());
             this.app.use(bodyParser.urlencoded({ extended: false }));
             this.app.use(bodyParser.text());
         }
-        for (let mw of lodash_1.get(options, "middleware", [])) {
-            this.app.use(mw);
+        this.app.use((req, res, next) => {
+            req.APILove = {
+                options: options
+            };
+            next();
+        });
+        if (options.generateDocs) {
+            options.apis = [{
+                    apiPath: "/",
+                    require: "lib/APIDocs"
+                }].concat(options.apis);
         }
         // Here we load our APIs, but we only load them when requested
         for (let api of lodash_1.get(options, "apis", [])) {
@@ -157,25 +171,6 @@ class APILove {
                 _loadAPI(apiRouter, api);
                 this.app.use(api.apiPath, apiRouter);
             }
-        }
-        if (!lodash_1.isNil(options.defaultRouteHandler)) {
-            this.app.use(options.defaultRouteHandler);
-        }
-        // Setup our default error handler
-        if (!lodash_1.isNil(options.defaultErrorHandler)) {
-            this.app.use(options.defaultErrorHandler);
-        }
-        else {
-            this.app.use((error, req, res, next) => {
-                if (error instanceof APIError_1.APIError) {
-                    let apiError = error;
-                    res.status(apiError.statusCode).send(APIConfig_1.APIConfig.OUTPUT_HAPI_RESULTS ? apiError.hapiOut() : apiError.out());
-                }
-                else {
-                    let apiResponse = new APIResponse_1.APIResponse(res, res);
-                    apiResponse.withError(error);
-                }
-            });
         }
         if (APIConfig_1.APIConfig.RUN_AS_SERVER) {
             this.app.listen(APIConfig_1.APIConfig.WEB_PORT, () => console.log(`API listening on port ${APIConfig_1.APIConfig.WEB_PORT}`));
@@ -222,4 +217,10 @@ function APIEndpoint(options) {
     };
 }
 exports.APIEndpoint = APIEndpoint;
+function API(options) {
+    return function (constructor) {
+        lodash_1.set(constructor, `__apiOptions`, options);
+    };
+}
+exports.API = API;
 //# sourceMappingURL=APILove.js.map

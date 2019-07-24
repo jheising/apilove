@@ -10,7 +10,7 @@ export function EnvVarSync(target: any, key: string)
     if(!isNil(envVar))
     {
         let metadata = Reflect.getMetadata("design:type", target, key);
-        let paramType = metadata.name;
+        let paramType = metadata.title;
 
         try
         {

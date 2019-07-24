@@ -1,0 +1,67 @@
+$family-sans-serif: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Ubuntu,sans-serif;
+$text: #697386;
+$body-size: 14px;
+$blue: #556cd6;
+$green: #1ea672;
+$menu-label-color: #a3acb9;
+$family-monospace: Menlo, Consolas, monospace;
+$red: #e56f4a;
+
+@import "~bulma/bulma.sass";
+
+html, body, #root, .doc-container
+{
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.doc-container
+{
+  display: flex;
+  flex-direction: row;
+}
+
+.doc-toc
+{
+  padding: 1em;
+  overflow-y: auto;
+}
+
+.doc-content
+{
+  flex: 1;
+  overflow-y: auto;
+}
+
+.doc-section
+{
+  border-bottom: 1px solid #e3e8ee;
+}
+
+.endpoint
+{
+  background: #3c4257;
+  padding: 16px;
+  border-radius: 8px;
+  color: #a3acb9;
+  margin-bottom: 1em;
+}
+
+.title, .content h1, .content h2, .content h3, .content h4, .content h5, .content h6
+{
+  color: #2a2f45;
+  letter-spacing: .63px;
+  font-weight: 300;
+}
+
+.menu-label
+{
+  font-weight: 600;
+  font-size: 12px;
+}
+
+a
+{
+  font-weight: 500;
+}

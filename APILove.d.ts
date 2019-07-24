@@ -11,16 +11,29 @@ export interface APILoaderDefinition {
     require: string;
     moduleName?: string;
 }
+export interface APILoveDocsOptions {
+    title?: string;
+    intro?: string;
+}
 export interface APILoveOptions {
     apis?: APILoaderDefinition[];
     loadStandardMiddleware?: boolean;
-    middleware?: any[];
-    defaultErrorHandler?: (error: any, req: any, res: any, next: any) => void;
-    defaultRouteHandler?: (req: any, res: any) => void;
+    generateDocs?: boolean;
+    docs?: APILoveDocsOptions;
+}
+export interface APIMetaData {
+    apiOptions: APIOptions;
+    path: string;
+    endpointOptions: APIEndpointOptions[];
 }
 export declare class APILove {
     static app: any;
+    static getAPIMetadata(options: APILoveOptions): APIMetaData[];
     static start(options: APILoveOptions): any;
+}
+export interface APIParameterDocsOptions {
+    description?: string;
+    typeDescription?: string;
 }
 export interface APIParameterOptions {
     /**
@@ -32,43 +45,32 @@ export interface APIParameterOptions {
      */
     defaultValue?: any;
     /**
-     * A synchronous function that can be used to transform an incoming parameter into something else. Can also be used as validation by throwing an error.
-     * You also get access to the raw express.js req object if you want it.
-     */
-    processor?: (value: any, req?: any) => any;
-    /**
      * One or more sources from which to look for this value. This is basically a path in the req object. So for example, a value of `query` would be equivalent to `req.query[myParamName]`
      * Multiple values can be defined, and whichever one results in a non-null value first will be used. Defaults to ["params", "query", "body", "cookie", "headers"].
      */
     sources?: string[] | string;
-    /**
-     * If set to true, the entire source will be returned instead of looking for a particular value. Defaults to false.
-     *
-     * Examples:
-     *
-     * The following would look for something named `userData` in the query params and return that.
-     * @APIParameter({sources:["query"]})
-     * userData:string
-     *
-     * The following would take all the query params and return them as an object
-     * @APIParameter({sources:["query"], includeFullSource:true})
-     * userData:{[paramName:string] : any}
-     */
-    includeFullSource?: boolean;
-    /**
-     * This is the raw name of the parameter to look for in cases where the name can't be represented as a valid javascript variable name.
-     * Examples usages might be when looking for a header like "content-type" or a parameter named "function"
-     */
-    rawName?: string;
+    docs?: APIParameterDocsOptions;
 }
 export declare function APIParameter(options: APIParameterOptions): (target: any, key: any, parameterIndex: number) => void;
+export interface APIEndpointDocsOptions {
+    title?: string;
+    description?: string;
+}
 export interface APIEndpointOptions {
     method?: string;
     path?: string;
     middleware?: ((req: any, res: any, next?: any) => void)[] | ((req: any, res: any, next: any) => void);
-    successResponse?: (responseData: any, res: any) => void;
+    docs?: APIEndpointDocsOptions;
 }
 export declare function APIEndpoint(options?: APIEndpointOptions): (target: any, key: any, descriptor: any) => void;
+export interface APIDocsOptions {
+    title?: string;
+    intro?: string;
+}
+export interface APIOptions {
+    docs?: APIDocsOptions;
+}
+export declare function API(options?: APIOptions): (constructor: Function) => void;
 export { APIConfig };
 export { APIError };
 export { APIResponse };

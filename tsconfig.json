@@ -6,6 +6,7 @@
     "strict": false,
     "inlineSources": true,
     "module": "commonjs",
+    "jsx": "react",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "typeRoots": ["node_modules/@types"]

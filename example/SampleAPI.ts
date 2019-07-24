@@ -2,8 +2,6 @@ import {APIEndpoint, APIParameter} from "../APILove";
 
 export class SampleAPI {
 
-    blah = "yo!sddf";
-
     @APIEndpoint({
         method: "POST",
         path: "/foo/:what"

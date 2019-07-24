@@ -22,11 +22,11 @@ provider:
   logRetentionInDays: 14
   environment:
     NODE_ENV: ${self:custom.NODE_ENV.${opt:stage, self:provider.stage}}
-# Override this value if you want to use a custom domain name
+# Override this value if you want to use a custom domain title
     API_URL_BASE: { "Fn::Join" : ["", [ "https://", { "Ref" : "ApiGatewayRestApi" }, ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}" ] ]  }
 # Uncomment if you want S3 support for file storage
 #    FILE_STORAGE_SERVICE_PROVIDER: "S3FileService"
-#    S3_FILE_SERVICE_BUCKET_NAME: "my.bucket.name"
+#    S3_FILE_SERVICE_BUCKET_NAME: "my.bucket.title"
 
 # Uncomment if you want DynamoDB support for key-value storage
 #    KV_STORAGE_SERVICE_PROVIDER: "DynamoDBKVService"

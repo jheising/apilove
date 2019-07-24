@@ -14,9 +14,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const APILove_1 = require("../APILove");
 class SampleAPI {
-    constructor() {
-        this.blah = "yo!sddf";
-    }
     static staticFunc(what, // This will be retrieved as a string from the URL
     data, // The body will be parsed and sent back here
     req, // Access the raw express.js request
