@@ -17,6 +17,7 @@ export interface APILoveOptions {
     middleware?: any[];
     defaultErrorHandler?: (error: any, req: any, res: any, next: any) => void;
     defaultRouteHandler?: (req: any, res: any) => void;
+    callbackWaitsForEmptyEventLoop?: boolean;
 }
 export declare class APILove {
     static app: any;

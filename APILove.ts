@@ -48,6 +48,8 @@ export interface APILoveOptions {
 
     // This can be used to provide a default output for all requests. Useful to return a 404 or other default page.
     defaultRouteHandler?: (req, res) => void;
+
+    callbackWaitsForEmptyEventLoop?:boolean;
 }
 
 function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
@@ -253,7 +255,7 @@ export class APILove {
             return this.app;
         } else {
             let serverless = require("serverless-http");
-            return serverless(this.app, {callbackWaitsForEmptyEventLoop: true});
+            return serverless(this.app, {callbackWaitsForEmptyEventLoop: !!options.callbackWaitsForEmptyEventLoop});
         }
     }
 }

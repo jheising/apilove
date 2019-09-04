@@ -1,7 +1,7 @@
 export declare class APIUtils {
     static getRawTypeName(obj: any): any;
     static convertToType(value: any, convertToType: string): any;
-    static toBoolean(input: any): any;
+    static toBoolean(input: any): boolean;
     static coalesce(...inputArgs: any[]): any;
     static getFunctionParamNames(fn: Function): string[];
     private static _IV_LENGTH;

@@ -183,7 +183,7 @@ class APILove {
         }
         else {
             let serverless = require("serverless-http");
-            return serverless(this.app, { callbackWaitsForEmptyEventLoop: true });
+            return serverless(this.app, { callbackWaitsForEmptyEventLoop: !!options.callbackWaitsForEmptyEventLoop });
         }
     }
 }
