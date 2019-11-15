@@ -20,7 +20,7 @@ export class S3FileService implements FileServiceProvider {
         this._bucketName = bucketName;
     }
 
-    writeFile(relativePath: string, contents: string): Promise<void> {
+    writeFile(relativePath: string, contents: string | Buffer): Promise<void> {
         let params = {
             Bucket: this._bucketName,
             Key: relativePath,
@@ -29,14 +29,14 @@ export class S3FileService implements FileServiceProvider {
         return S3FileService.s3Client.putObject(params).promise();
     }
 
-    readFile(relativePath: string): Promise<string> {
+    readFile(relativePath: string, returnAsBuffer:boolean = false): Promise<string | Buffer> {
         let params = {
             Bucket: this._bucketName,
             Key: relativePath
         };
 
         return S3FileService.s3Client.getObject(params).promise().then(data => {
-            return data.Body.toString("utf-8");
+            return returnAsBuffer ? data.Body : data.Body.toString("utf-8");
         });
     }
 
@@ -64,8 +64,7 @@ export class S3FileService implements FileServiceProvider {
     listDirectoriesInPath(relativePath: string): Promise<string[]> {
 
         // Append a / if there isn't one
-        if(!(/\/$/.test(relativePath)))
-        {
+        if (!(/\/$/.test(relativePath))) {
             relativePath += "/";
         }
 
@@ -75,16 +74,14 @@ export class S3FileService implements FileServiceProvider {
             Prefix: relativePath
         };
         return S3FileService.s3Client.listObjectsV2(params).promise().then(data => {
-            let dirs:string[] = [];
+            let dirs: string[] = [];
 
             let commonPrefixes = get(data, "CommonPrefixes", []);
 
-            for(let commonPrefix of commonPrefixes)
-            {
-                let dirName:string = commonPrefix.Prefix.replace(relativePath, "");
+            for (let commonPrefix of commonPrefixes) {
+                let dirName: string = commonPrefix.Prefix.replace(relativePath, "");
 
-                if(/.+\/$/.test(dirName))
-                {
+                if (/.+\/$/.test(dirName)) {
                     dirs.push(dirName.replace(/(.+)\/$/, "$1"));
                 }
             }

@@ -27,17 +27,17 @@ export class DiskFileService implements FileServiceProvider {
         return Promise.resolve();
     }
 
-    writeFile(relativePath: string, contents: string): Promise<void> {
+    writeFile(relativePath: string, contents: string | Buffer): Promise<void> {
         let filePath = path.join(this._rootPath, relativePath);
         return this._isInvalidFilePath(filePath)
             .then(() => util.promisify(fs.outputFile)(filePath, contents));
     }
 
-    readFile(relativePath: string): Promise<string> {
+    readFile(relativePath: string, returnAsBuffer:boolean): Promise<string | Buffer> {
         let filePath = path.join(this._rootPath, relativePath);
         return this._isInvalidFilePath(filePath)
             .then(() => util.promisify(fs.readFile)(filePath))
-            .then((fileContents) => fileContents.toString())
+            .then((fileContents) => returnAsBuffer ? fileContents : fileContents.toString())
             .catch((error) => Promise.reject(error.code === "ENOENT" ? APIError.create404NotFoundError() : error));
     }
 

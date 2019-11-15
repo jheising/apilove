@@ -1,6 +1,6 @@
 {
   "name": "apilove",
-  "version": "0.6.27",
+  "version": "0.6.28",
   "repository": {
     "type": "git",
     "url": "https://github.com/jheising/apilove"
@@ -24,7 +24,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^10.11.3",
-    "serverless": "^1.48.3",
+    "serverless": "^1.57.0",
     "serverless-api-compression": "^1.0.1"
   },
   "dependencies": {
