@@ -18,43 +18,41 @@ export class APIResponse {
         return new APIResponse(req, res).withError(error, hapiOutput);
     }
 
-    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = [], disableFriendlyResponse?:boolean, successResponseHandler?: (responseData: any, res) => void) {
+    async processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = [], disableFriendlyResponse?: boolean, successResponseHandler?: (responseData: any, res) => void) {
         // Add the req, and res to the end arguments if the function wants it
         handlerArgs = handlerArgs.concat([this.req, this.res]);
 
-        let handlerPromise = handlerFunction.apply(target, handlerArgs);
-        if (!(handlerPromise instanceof Promise)) {
-            throw new Error(`API function named '${handlerFunction.name}' doesn't return a promise.`);
+        let handlerData;
+
+        try {
+            const handlerOutput = handlerFunction.apply(target, handlerArgs);
+            if (!(handlerOutput instanceof Promise)) {
+                handlerData = handlerOutput;
+            } else {
+                handlerData = await handlerOutput;
+            }
+        } catch (error) {
+            this.withError(error);
         }
-        else {
-            handlerPromise.then((data: any) => {
 
-                // If the data is a URL, consider this a redirect.
-                if (data instanceof URL) {
-                    this.res.redirect((<URL>data).toString());
-                    return;
-                }
+        // If the data is a URL, consider this a redirect.
+        if (handlerData instanceof URL) {
+            this.res.redirect((<URL>handlerData).toString());
+            return;
+        }
 
-                if(disableFriendlyResponse)
-                {
-                    this.res.json(data);
-                }
-                else if (!isNil(successResponseHandler)) {
-                    successResponseHandler(data, this.res);
-                }
-                else {
-                    this.withSuccess(data, 200);
-                }
-            }).catch((error: any) => {
-                this.withError(error);
-            });
+        if (disableFriendlyResponse) {
+            this.res.json(handlerData);
+        } else if (!isNil(successResponseHandler)) {
+            successResponseHandler(handlerData, this.res);
+        } else {
+            this.withSuccess(handlerData, 200);
         }
     }
 
     withError(error: any, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
 
-        if(this.res.headersSent || isNil(error))
-        {
+        if (this.res.headersSent || isNil(error)) {
             return;
         }
 
@@ -62,8 +60,7 @@ export class APIResponse {
 
         if (error instanceof APIError) {
             apiError = error;
-        }
-        else {
+        } else {
             apiError = new APIError("unknown", error);
         }
 
@@ -72,21 +69,17 @@ export class APIResponse {
             console.error(JSON.stringify(apiError.out(true)));
         }
 
-        if(this.next)
-        {
+        if (this.next) {
             // Let the standard error handler handle it
             this.next(apiError);
-        }
-        else
-        {
+        } else {
             this.res.status(apiError.statusCode).send(hapiOutput ? apiError.hapiOut() : apiError.out());
         }
     }
 
     withSuccess(data?: any, statusCode: number = 200, hapiOutput: boolean = APIConfig.OUTPUT_HAPI_RESULTS) {
 
-        if(this.res.headersSent)
-        {
+        if (this.res.headersSent) {
             return;
         }
 
