@@ -18,7 +18,7 @@ export class APIResponse {
         return new APIResponse(req, res).withError(error, hapiOutput);
     }
 
-    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = [], successResponseHandler?: (responseData: any, res) => void) {
+    processHandlerFunction(target: any, handlerFunction: Function, handlerArgs: any[] = [], disableFriendlyResponse?:boolean, successResponseHandler?: (responseData: any, res) => void) {
         // Add the req, and res to the end arguments if the function wants it
         handlerArgs = handlerArgs.concat([this.req, this.res]);
 
@@ -35,7 +35,11 @@ export class APIResponse {
                     return;
                 }
 
-                if (!isNil(successResponseHandler)) {
+                if(disableFriendlyResponse)
+                {
+                    this.res.json(data);
+                }
+                else if (!isNil(successResponseHandler)) {
                     successResponseHandler(data, this.res);
                 }
                 else {

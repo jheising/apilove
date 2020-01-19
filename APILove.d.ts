@@ -67,6 +67,7 @@ export interface APIEndpointOptions {
     method?: string;
     path?: string;
     middleware?: ((req: any, res: any, next?: any) => void)[] | ((req: any, res: any, next: any) => void);
+    disableFriendlyResponse?: boolean;
     successResponse?: (responseData: any, res: any) => void;
 }
 export declare function APIEndpoint(options?: APIEndpointOptions): (target: any, key: any, descriptor: any) => void;

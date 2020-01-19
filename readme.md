@@ -103,6 +103,9 @@ interface APIEndpointOptions {
     // Any express.js middleware functions you want to be executed before invoking this method. Useful for things like authentication.
     middleware?: ((req, res, next?) => void)[] | ((req, res, next) => void);
 
+    // Turn this on if you want to return data as-is and not in HAPI format
+    disableFriendlyResponse?:boolean;
+
     // Specify a function here to handle the response yourself
     successResponse?: (responseData:any, res) => void;
 }

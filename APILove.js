@@ -92,7 +92,7 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
             apiResponse.withError(APIError_1.APIError.createValidationError(validationErrors));
             return;
         }
-        apiResponse.processHandlerFunction(thisObject, handlerData.handlerFunction, handlerArgs, handlerData.options.successResponse);
+        apiResponse.processHandlerFunction(thisObject, handlerData.handlerFunction, handlerArgs, handlerData.options.disableFriendlyResponse, handlerData.options.successResponse);
     };
 }
 function _loadAPI(apiRouter, apiDefinition) {
@@ -187,8 +187,8 @@ class APILove {
         }
     }
 }
-APILove.app = express();
 exports.APILove = APILove;
+APILove.app = express();
 function APIParameter(options) {
     return function (target, key, parameterIndex) {
         let isInstance = lodash_1.isNil(target.prototype);
