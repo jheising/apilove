@@ -33,6 +33,7 @@ export class APIResponse {
             }
         } catch (error) {
             this.withError(error);
+            return;
         }
 
         // If the data is a URL, consider this a redirect.
