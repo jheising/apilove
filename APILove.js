@@ -129,9 +129,9 @@ class APILove {
     static start(options) {
         if (options.loadStandardMiddleware !== false) {
             this.app.use(cookieParser());
-            this.app.use(bodyParser.json());
-            this.app.use(bodyParser.urlencoded({ extended: false }));
-            this.app.use(bodyParser.text());
+            this.app.use(bodyParser.json({ limit: "50mb" }));
+            this.app.use(bodyParser.urlencoded({ limit: "50mb", extended: false, parameterLimit: 50000 }));
+            this.app.use(bodyParser.text({ limit: "50mb" }));
         }
         for (let mw of lodash_1.get(options, "middleware", [])) {
             this.app.use(mw);
