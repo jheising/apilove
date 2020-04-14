@@ -125,18 +125,18 @@ export class APIUtils {
         return slugify(text);
     }
 
-    static hashString(text:string)
+    static hashString(text:string, encoding:string = 'base64')
     {
         let shasum = crypto.createHash(this._HASH_ALG);
         shasum.update(text);
-        return shasum.digest('base64');
+        return shasum.digest(encoding as any);
     }
 
-    static hashMD5(text:string)
+    static hashMD5(text:string, encoding:string = 'base64')
     {
         let md5 = crypto.createHash('md5');
         md5.update(text);
-        return md5.digest('base64');
+        return md5.digest(encoding as any);
     }
 
     /**

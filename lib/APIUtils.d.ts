@@ -10,8 +10,8 @@ export declare class APIUtils {
     static encrypt(text: string, password?: string): string;
     static decrypt(text: string, password?: string): string;
     static slugify(text: string): string;
-    static hashString(text: string): string;
-    static hashMD5(text: string): string;
+    static hashString(text: string, encoding?: string): string;
+    static hashMD5(text: string, encoding?: string): string;
     /**
      * Creates an expiration date in seconds since UNIX epoch from now.
      * @param expirationInSeconds
