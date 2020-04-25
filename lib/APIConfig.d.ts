@@ -16,4 +16,5 @@ export declare class APIConfig {
     static FILE_STORAGE_SERVICE_PROVIDER: "DiskFileService" | "S3FileService";
     static DISK_FILE_SERVICE_ROOT_PATH: string;
     static S3_FILE_SERVICE_BUCKET_NAME: string;
+    static JWT_SECRET: string;
 }

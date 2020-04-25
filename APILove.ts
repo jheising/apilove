@@ -11,6 +11,7 @@ import {APIError} from "./lib/APIError";
 import {KVService} from "./lib/Services/KeyValue/KVService";
 import {FileService} from "./lib/Services/File/FileService";
 import {EnvVarSync} from "./lib/Services/Config";
+import {APIAuthUtils} from "./lib/APIAuthUtils";
 
 interface HandlerParameterData {
     paramType: string;
@@ -195,6 +196,10 @@ export class APILove {
             this.app.use(bodyParser.json({limit: "50mb"}));
             this.app.use(bodyParser.urlencoded({limit: "50mb", extended: false, parameterLimit:50000}));
             this.app.use(bodyParser.text({limit: "50mb"}));
+            this.app.use((req, res, next) => {
+                req.auth = APIAuthUtils.getAuthCredentialsFromRequest(req, true);
+                next();
+            });
         }
 
         for (let mw of get(options, "middleware", [])) {

@@ -1,12 +1,19 @@
 "use strict";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express = require("express");
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+const express = __importStar(require("express"));
+const bodyParser = __importStar(require("body-parser"));
+const cookieParser = __importStar(require("cookie-parser"));
 const lodash_1 = require("lodash");
 const APIConfig_1 = require("./lib/APIConfig");
 exports.APIConfig = APIConfig_1.APIConfig;
-const path = require("path");
+const path = __importStar(require("path"));
 const APIUtils_1 = require("./lib/APIUtils");
 exports.APIUtils = APIUtils_1.APIUtils;
 require("reflect-metadata");
@@ -20,6 +27,7 @@ const FileService_1 = require("./lib/Services/File/FileService");
 exports.APIFileService = FileService_1.FileService;
 const Config_1 = require("./lib/Services/Config");
 exports.EnvVarSync = Config_1.EnvVarSync;
+const APIAuthUtils_1 = require("./lib/APIAuthUtils");
 function _createHandlerWrapperFunction(handlerData, thisObject) {
     return (req, res, next) => {
         let apiResponse = new APIResponse_1.APIResponse(req, res, next);
@@ -132,6 +140,10 @@ class APILove {
             this.app.use(bodyParser.json({ limit: "50mb" }));
             this.app.use(bodyParser.urlencoded({ limit: "50mb", extended: false, parameterLimit: 50000 }));
             this.app.use(bodyParser.text({ limit: "50mb" }));
+            this.app.use((req, res, next) => {
+                req.auth = APIAuthUtils_1.APIAuthUtils.getAuthCredentialsFromRequest(req, true);
+                next();
+            });
         }
         for (let mw of lodash_1.get(options, "middleware", [])) {
             this.app.use(mw);

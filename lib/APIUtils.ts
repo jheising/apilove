@@ -1,4 +1,4 @@
-import {isBoolean, isNil, toString, castArray, toNumber, isString} from "lodash";
+import {isBoolean, isNil, toString, castArray, toNumber, isString, padEnd} from "lodash";
 import * as getArguments from "function-arguments";
 import {APIConfig} from "./APIConfig";
 import * as crypto from "crypto";
@@ -31,8 +31,7 @@ export class APIUtils {
             if (convertToType === "String") {
                 try {
                     return JSON.stringify(value);
-                }
-                catch (e) {
+                } catch (e) {
                 }
             }
 
@@ -59,8 +58,7 @@ export class APIUtils {
             case "Object": {
                 try {
                     convertedValue = JSON.parse(value);
-                }
-                catch (e) {
+                } catch (e) {
                     convertedValue = value;
                 }
             }
@@ -100,7 +98,10 @@ export class APIUtils {
     private static _CRYPTO_ALG = 'aes-256-cbc';
     private static _HASH_ALG = 'sha256';
 
-    static encrypt(text: string, password:string = APIConfig.ENCRYPTION_SECRET) {
+    static encrypt(text: string, password: string = APIConfig.ENCRYPTION_SECRET) {
+
+        password = padEnd(password, 32, "0");
+
         let iv = crypto.randomBytes(this._IV_LENGTH);
         let cipher = crypto.createCipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
         let encrypted = cipher.update(text);
@@ -109,7 +110,7 @@ export class APIUtils {
         return iv.toString('base64') + ':' + encrypted.toString('base64');
     }
 
-    static decrypt(text: string, password:string = APIConfig.ENCRYPTION_SECRET) {
+    static decrypt(text: string, password: string = APIConfig.ENCRYPTION_SECRET) {
         let textParts = text.split(':');
         let iv = Buffer.from(textParts.shift(), 'base64');
         let encryptedText = Buffer.from(textParts.join(':'), 'base64');
@@ -120,20 +121,17 @@ export class APIUtils {
         return decrypted.toString();
     }
 
-    static slugify(text:string)
-    {
+    static slugify(text: string) {
         return slugify(text);
     }
 
-    static hashString(text:string, encoding:string = 'base64')
-    {
+    static hashString(text: string, encoding: string = 'base64') {
         let shasum = crypto.createHash(this._HASH_ALG);
         shasum.update(text);
         return shasum.digest(encoding as any);
     }
 
-    static hashMD5(text:string, encoding:string = 'base64')
-    {
+    static hashMD5(text: string, encoding: string = 'base64') {
         let md5 = crypto.createHash('md5');
         md5.update(text);
         return md5.digest(encoding as any);
@@ -143,8 +141,7 @@ export class APIUtils {
      * Creates an expiration date in seconds since UNIX epoch from now.
      * @param expirationInSeconds
      */
-    static createExpirationInSeconds(expirationInSeconds:number):number
-    {
+    static createExpirationInSeconds(expirationInSeconds: number): number {
         return Math.floor(Date.now() / 1000) + expirationInSeconds;
     }
 }

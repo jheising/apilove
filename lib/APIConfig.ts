@@ -38,7 +38,7 @@ export class APIConfig {
     @EnvVarSync
     static AWS_REGION: string = "us-east-1";
 
-    // TODO: CHANGE THIS!!
+    // TODO: CHANGE THIS BY SETTING AN ENVIRONMENT VARIABLE NAMED ENCRYPTION_SECRET
     @EnvVarSync
     static ENCRYPTION_SECRET:string = "E1E8A96B838495F8CD1310304361C741";
 
@@ -67,4 +67,8 @@ export class APIConfig {
 
     @EnvVarSync
     static S3_FILE_SERVICE_BUCKET_NAME: string;
+
+    // TODO: CHANGE THIS BY SETTING AN ENVIRONMENT VARIABLE NAMED JWT_SECRET
+    @EnvVarSync
+    static JWT_SECRET:string = "65e068de-81ef-457d-b00a-82364c360226";
 }
