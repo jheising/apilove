@@ -1,5 +1,5 @@
 import {APIConfig} from "./APIConfig";
-import * as shortid from "shortid";
+import shortid from "shortid";
 import {get, isNil} from "lodash";
 
 export class APIError {

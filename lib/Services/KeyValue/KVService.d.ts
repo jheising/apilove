@@ -18,7 +18,7 @@ export declare abstract class KVServiceProvider {
 }
 export declare class KVService {
     private static _providerInstance;
-    private static get _provider();
+    private static readonly _provider;
     static setValue(namespace: string, key: string, value: any, expirationInSeconds?: number, encrypted?: boolean): Promise<void>;
     static getValue(namespace: string, key: string, defaultValue?: any, encrypted?: boolean): Promise<any>;
     static getValues(namespace: string, page?: number, pageSize?: number, encrypted?: boolean): Promise<KVServiceValues>;

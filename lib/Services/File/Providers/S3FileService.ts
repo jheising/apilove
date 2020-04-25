@@ -1,4 +1,4 @@
-import * as aws from "aws-sdk";
+import aws from "aws-sdk";
 import {FileServiceProvider} from "../FileService";
 import {APIConfig} from "../../../APIConfig";
 import {each} from "async";

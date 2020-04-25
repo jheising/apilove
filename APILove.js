@@ -1,19 +1,15 @@
 "use strict";
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express = __importStar(require("express"));
-const bodyParser = __importStar(require("body-parser"));
-const cookieParser = __importStar(require("cookie-parser"));
+const express_1 = __importDefault(require("express"));
+const body_parser_1 = __importDefault(require("body-parser"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const lodash_1 = require("lodash");
 const APIConfig_1 = require("./lib/APIConfig");
 exports.APIConfig = APIConfig_1.APIConfig;
-const path = __importStar(require("path"));
+const path_1 = __importDefault(require("path"));
 const APIUtils_1 = require("./lib/APIUtils");
 exports.APIUtils = APIUtils_1.APIUtils;
 require("reflect-metadata");
@@ -22,15 +18,23 @@ exports.APIResponse = APIResponse_1.APIResponse;
 const APIError_1 = require("./lib/APIError");
 exports.APIError = APIError_1.APIError;
 const KVService_1 = require("./lib/Services/KeyValue/KVService");
-exports.APIKVService = KVService_1.KVService;
+exports.KVService = KVService_1.KVService;
 const FileService_1 = require("./lib/Services/File/FileService");
-exports.APIFileService = FileService_1.FileService;
+exports.FileService = FileService_1.FileService;
 const Config_1 = require("./lib/Services/Config");
 exports.EnvVarSync = Config_1.EnvVarSync;
 const APIAuthUtils_1 = require("./lib/APIAuthUtils");
+exports.APIAuthUtils = APIAuthUtils_1.APIAuthUtils;
 function _createHandlerWrapperFunction(handlerData, thisObject) {
     return (req, res, next) => {
         let apiResponse = new APIResponse_1.APIResponse(req, res, next);
+        // Does this require authentication?
+        if (handlerData.options.requireAuthentication) {
+            if (!req.auth || !req.auth.isAuthenticated || req.auth.isExpired) {
+                apiResponse.withError(APIError_1.APIError.create401UnauthorizedError());
+                return;
+            }
+        }
         let handlerArgs = [];
         let validationErrors = [];
         // Loop through each parameter in our function and pull it from the request
@@ -44,21 +48,26 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
             }
             let paramSources = lodash_1.castArray(lodash_1.get(paramOptions, "sources", ["params", "query", "body", "cookie", "headers"]));
             let paramValue;
-            for (let paramSource of paramSources) {
-                let paramValues = lodash_1.get(req, paramSource);
-                if (lodash_1.isNil(paramValues)) {
-                    continue;
-                }
-                if (paramOptions.includeFullSource ||
-                    (/[\.\[\]]/g).test(paramSource) // If the source contains any of the characters ".[]" (ie a path), assume the developer meant to include the full source.
-                ) {
-                    paramValue = paramValues;
-                    break;
-                }
-                else {
-                    if (lodash_1.has(paramValues, paramName)) {
-                        paramValue = paramValues[paramName];
+            if (req.auth && paramData.paramType === "APIAuthUser") {
+                paramValue = APIAuthUtils_1.APIAuthUtils.getAPIAuthUserFromAuthCredentials(req.auth);
+            }
+            else {
+                for (let paramSource of paramSources) {
+                    let paramValues = lodash_1.get(req, paramSource);
+                    if (lodash_1.isNil(paramValues)) {
+                        continue;
+                    }
+                    if (paramOptions.includeFullSource ||
+                        (/[\.\[\]]/g).test(paramSource) // If the source contains any of the characters ".[]" (ie a path), assume the developer meant to include the full source.
+                    ) {
+                        paramValue = paramValues;
                         break;
+                    }
+                    else {
+                        if (lodash_1.has(paramValues, paramName)) {
+                            paramValue = paramValues[paramName];
+                            break;
+                        }
                     }
                 }
             }
@@ -86,7 +95,7 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
                 handlerArgs.push(undefined);
                 continue;
             }
-            argValue = APIUtils_1.APIUtils.convertToType(argValue, paramData.paramType);
+            argValue = APIUtils_1.APIUtils.convertToType(argValue, paramData.paramRawType);
             if (lodash_1.isNil(argValue) || lodash_1.isNaN(argValue)) {
                 validationErrors.push({
                     parameter: paramName,
@@ -106,7 +115,7 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
 function _loadAPI(apiRouter, apiDefinition) {
     let apiModule;
     try {
-        apiModule = require(path.resolve(process.cwd(), apiDefinition.require));
+        apiModule = require(path_1.default.resolve(process.cwd(), apiDefinition.require));
     }
     catch (e) {
         console.error(e);
@@ -115,7 +124,7 @@ function _loadAPI(apiRouter, apiDefinition) {
     if (lodash_1.isNil(apiModule)) {
         return null;
     }
-    let moduleName = APIUtils_1.APIUtils.coalesce(apiDefinition.moduleName, path.basename(apiDefinition.require));
+    let moduleName = APIUtils_1.APIUtils.coalesce(apiDefinition.moduleName, path_1.default.basename(apiDefinition.require));
     let apiClass = APIUtils_1.APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
     let apiInstance;
     lodash_1.each(lodash_1.get(apiClass, "__handlerData", {}), (handlerData, name) => {
@@ -136,10 +145,10 @@ function _loadAPI(apiRouter, apiDefinition) {
 class APILove {
     static start(options) {
         if (options.loadStandardMiddleware !== false) {
-            this.app.use(cookieParser());
-            this.app.use(bodyParser.json({ limit: "50mb" }));
-            this.app.use(bodyParser.urlencoded({ limit: "50mb", extended: false, parameterLimit: 50000 }));
-            this.app.use(bodyParser.text({ limit: "50mb" }));
+            this.app.use(cookie_parser_1.default());
+            this.app.use(body_parser_1.default.json({ limit: "50mb" }));
+            this.app.use(body_parser_1.default.urlencoded({ limit: "50mb", extended: false, parameterLimit: 50000 }));
+            this.app.use(body_parser_1.default.text({ limit: "50mb" }));
             this.app.use((req, res, next) => {
                 req.auth = APIAuthUtils_1.APIAuthUtils.getAuthCredentialsFromRequest(req, true);
                 next();
@@ -158,14 +167,14 @@ class APILove {
                 this.app.use(api.apiPath, (req, res, next) => {
                     // Lazy load our API
                     if (!apiRouter) {
-                        apiRouter = express.Router();
+                        apiRouter = express_1.default.Router();
                         _loadAPI(apiRouter, api);
                     }
                     apiRouter(req, res, next);
                 });
             }
             else {
-                let apiRouter = express.Router();
+                let apiRouter = express_1.default.Router();
                 _loadAPI(apiRouter, api);
                 this.app.use(api.apiPath, apiRouter);
             }
@@ -200,7 +209,7 @@ class APILove {
     }
 }
 exports.APILove = APILove;
-APILove.app = express();
+APILove.app = express_1.default();
 function APIParameter(options) {
     return function (target, key, parameterIndex) {
         let isInstance = lodash_1.isNil(target.prototype);
@@ -227,7 +236,8 @@ function APIEndpoint(options) {
         handlerData.options = options;
         handlerData.handlerParameterNames = parameterNames;
         for (let parameterIndex = 0; parameterIndex < parameterNames.length; parameterIndex++) {
-            lodash_1.set(handlerData, `handlerParameterData.${parameterIndex}.paramType`, APIUtils_1.APIUtils.getRawTypeName(parameterMetadata[parameterIndex].prototype));
+            lodash_1.set(handlerData, `handlerParameterData.${parameterIndex}.paramRawType`, APIUtils_1.APIUtils.getRawTypeName(parameterMetadata[parameterIndex].prototype));
+            lodash_1.set(handlerData, `handlerParameterData.${parameterIndex}.paramType`, parameterMetadata[parameterIndex].name);
             lodash_1.set(handlerData, `handlerParameterData.${parameterIndex}.paramName`, parameterNames[parameterIndex]);
         }
         lodash_1.set(theClass, `__handlerData.${key}`, handlerData);

@@ -108,6 +108,9 @@ interface APIEndpointOptions {
 
     // Specify a function here to handle the response yourself
     successResponse?: (responseData:any, res) => void;
+
+    // If set to true, a valid JWT must be present in the request, otherwise a 401 error will be thrown
+    requireAuthentication?:boolean;
 }
 ```
 

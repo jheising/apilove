@@ -1,9 +1,9 @@
 import {FileServiceProvider} from "../FileService";
-import * as path from "path";
+import path from "path";
 import {APIConfig} from "../../../APIConfig";
-import * as fs from "fs-extra";
+import fs from "fs-extra";
 import {each} from "async";
-import * as util from "util";
+import util from "util";
 import {APIError} from "../../../APIError";
 
 export class DiskFileService implements FileServiceProvider {

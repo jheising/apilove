@@ -1,4 +1,4 @@
-import * as isLambda from "is-lambda";
+import isLambda from "is-lambda";
 import {get} from "lodash";
 import {EnvVarSync} from "./Services/Config";
 

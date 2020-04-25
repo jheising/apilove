@@ -6,6 +6,7 @@ import { APIError } from "./lib/APIError";
 import { KVService } from "./lib/Services/KeyValue/KVService";
 import { FileService } from "./lib/Services/File/FileService";
 import { EnvVarSync } from "./lib/Services/Config";
+import { APIAuthUtils } from "./lib/APIAuthUtils";
 export interface APILoaderDefinition {
     apiPath?: string;
     require: string;
@@ -69,12 +70,7 @@ export interface APIEndpointOptions {
     middleware?: ((req: any, res: any, next?: any) => void)[] | ((req: any, res: any, next: any) => void);
     disableFriendlyResponse?: boolean;
     successResponse?: (responseData: any, res: any) => void;
+    requireAuthentication?: boolean;
 }
 export declare function APIEndpoint(options?: APIEndpointOptions): (target: any, key: any, descriptor: any) => void;
-export { APIConfig };
-export { APIError };
-export { APIResponse };
-export { APIUtils };
-export { KVService as APIKVService };
-export { FileService as APIFileService };
-export { EnvVarSync };
+export { APIConfig, APIAuthUtils, APIError, APIResponse, APIUtils, KVService, FileService, EnvVarSync };

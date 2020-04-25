@@ -1,7 +1,7 @@
 import {isBoolean, isNil, toString, castArray, toNumber, isString, padEnd} from "lodash";
-import * as getArguments from "function-arguments";
+import getArguments from "function-arguments";
 import {APIConfig} from "./APIConfig";
-import * as crypto from "crypto";
+import crypto from "crypto";
 import slugify from "slugify";
 
 slugify.extend({"/": ":"});

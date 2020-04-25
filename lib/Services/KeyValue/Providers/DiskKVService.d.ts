@@ -1,7 +1,7 @@
 import { KVServiceProvider, KVServiceValues } from "../KVService";
 export declare class DiskKVService extends KVServiceProvider {
     private static _fileServiceInstance;
-    private static get _fileService();
+    private static readonly _fileService;
     setValue(namespace: string, key: string, value: any, expirationInSeconds: number): Promise<void>;
     hasValue(namespace: string, key: string): Promise<boolean>;
     private _getValue;

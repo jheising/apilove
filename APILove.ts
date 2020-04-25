@@ -1,9 +1,9 @@
-import * as express from "express";
-import * as bodyParser from "body-parser";
-import * as cookieParser from "cookie-parser";
+import express from "express";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import {get, isNil, set, defaultsDeep, each, castArray, has, isNaN} from "lodash";
 import {APIConfig} from "./lib/APIConfig";
-import * as path from "path";
+import path from "path";
 import {APIUtils} from "./lib/APIUtils";
 import "reflect-metadata";
 import {APIResponse} from "./lib/APIResponse";
@@ -11,9 +11,10 @@ import {APIError} from "./lib/APIError";
 import {KVService} from "./lib/Services/KeyValue/KVService";
 import {FileService} from "./lib/Services/File/FileService";
 import {EnvVarSync} from "./lib/Services/Config";
-import {APIAuthUtils} from "./lib/APIAuthUtils";
+import {APIAuthUser, APIAuthUtils} from "./lib/APIAuthUtils";
 
 interface HandlerParameterData {
+    paramRawType: string;
     paramType: string;
     paramName: string;
     paramOptions: APIParameterOptions;
@@ -50,12 +51,21 @@ export interface APILoveOptions {
     // This can be used to provide a default output for all requests. Useful to return a 404 or other default page.
     defaultRouteHandler?: (req, res) => void;
 
-    callbackWaitsForEmptyEventLoop?:boolean;
+    callbackWaitsForEmptyEventLoop?: boolean;
 }
 
 function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
     return (req, res, next) => {
+
         let apiResponse = new APIResponse(req, res, next);
+
+        // Does this require authentication?
+        if (handlerData.options.requireAuthentication) {
+            if (!req.auth || !req.auth.isAuthenticated || req.auth.isExpired) {
+                apiResponse.withError(APIError.create401UnauthorizedError());
+                return;
+            }
+        }
 
         let handlerArgs = [];
         let validationErrors: { parameter: string, message: string }[] = [];
@@ -74,22 +84,26 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
             let paramSources: string[] = castArray(get(paramOptions, "sources", ["params", "query", "body", "cookie", "headers"]));
             let paramValue;
 
-            for (let paramSource of paramSources) {
-                let paramValues = get(req, paramSource);
+            if (req.auth && paramData.paramType === "APIAuthUser") {
+                paramValue = APIAuthUtils.getAPIAuthUserFromAuthCredentials(req.auth);
+            } else {
+                for (let paramSource of paramSources) {
+                    let paramValues = get(req, paramSource);
 
-                if (isNil(paramValues)) {
-                    continue;
-                }
+                    if (isNil(paramValues)) {
+                        continue;
+                    }
 
-                if (paramOptions.includeFullSource ||
-                    (/[\.\[\]]/g).test(paramSource) // If the source contains any of the characters ".[]" (ie a path), assume the developer meant to include the full source.
-                ) {
-                    paramValue = paramValues;
-                    break;
-                } else {
-                    if (has(paramValues, paramName)) {
-                        paramValue = paramValues[paramName];
+                    if (paramOptions.includeFullSource ||
+                        (/[\.\[\]]/g).test(paramSource) // If the source contains any of the characters ".[]" (ie a path), assume the developer meant to include the full source.
+                    ) {
+                        paramValue = paramValues;
                         break;
+                    } else {
+                        if (has(paramValues, paramName)) {
+                            paramValue = paramValues[paramName];
+                            break;
+                        }
                     }
                 }
             }
@@ -122,7 +136,7 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
                 continue;
             }
 
-            argValue = APIUtils.convertToType(argValue, paramData.paramType);
+            argValue = APIUtils.convertToType(argValue, paramData.paramRawType);
 
             if (isNil(argValue) || isNaN(argValue)) {
                 validationErrors.push({
@@ -194,7 +208,7 @@ export class APILove {
         if (options.loadStandardMiddleware !== false) {
             this.app.use(cookieParser());
             this.app.use(bodyParser.json({limit: "50mb"}));
-            this.app.use(bodyParser.urlencoded({limit: "50mb", extended: false, parameterLimit:50000}));
+            this.app.use(bodyParser.urlencoded({limit: "50mb", extended: false, parameterLimit: 50000}));
             this.app.use(bodyParser.text({limit: "50mb"}));
             this.app.use((req, res, next) => {
                 req.auth = APIAuthUtils.getAuthCredentialsFromRequest(req, true);
@@ -333,10 +347,13 @@ export interface APIEndpointOptions {
     middleware?: ((req, res, next?) => void)[] | ((req, res, next) => void);
 
     // Turn this on if you want to return data as-is and not in HAPI format
-    disableFriendlyResponse?:boolean;
+    disableFriendlyResponse?: boolean;
 
     // Specify a function here to handle the response yourself
     successResponse?: (responseData: any, res) => void;
+
+    // If set to true, a valid JWT must be present in the request, otherwise a 401 error will be thrown
+    requireAuthentication?: boolean;
 }
 
 export function APIEndpoint(options?: APIEndpointOptions) {
@@ -361,7 +378,8 @@ export function APIEndpoint(options?: APIEndpointOptions) {
         handlerData.handlerParameterNames = parameterNames;
 
         for (let parameterIndex = 0; parameterIndex < parameterNames.length; parameterIndex++) {
-            set(handlerData, `handlerParameterData.${parameterIndex}.paramType`, APIUtils.getRawTypeName(parameterMetadata[parameterIndex].prototype));
+            set(handlerData, `handlerParameterData.${parameterIndex}.paramRawType`, APIUtils.getRawTypeName(parameterMetadata[parameterIndex].prototype));
+            set(handlerData, `handlerParameterData.${parameterIndex}.paramType`, parameterMetadata[parameterIndex].name);
             set(handlerData, `handlerParameterData.${parameterIndex}.paramName`, parameterNames[parameterIndex]);
         }
 
@@ -371,10 +389,13 @@ export function APIEndpoint(options?: APIEndpointOptions) {
 
 // Re-export stuff
 // TODO: do we need to reconsider this? Is this causing unneeded memory usage if none of these end up getting used?
-export {APIConfig};
-export {APIError};
-export {APIResponse};
-export {APIUtils};
-export {KVService as APIKVService};
-export {FileService as APIFileService};
-export {EnvVarSync};
+export {
+    APIConfig,
+    APIAuthUtils,
+    APIError,
+    APIResponse,
+    APIUtils,
+    KVService,
+    FileService,
+    EnvVarSync
+};

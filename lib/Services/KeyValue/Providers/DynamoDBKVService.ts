@@ -1,6 +1,6 @@
 import {KVServiceProvider, KVServiceValues, KVServiceValue} from "../KVService";
 import {isNil, get} from "lodash";
-import * as aws from "aws-sdk";
+import aws from "aws-sdk";
 import {APIConfig} from "../../../APIConfig";
 
 export class DynamoDBKVService extends KVServiceProvider {

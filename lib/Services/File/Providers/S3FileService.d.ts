@@ -3,7 +3,7 @@ import { FileServiceProvider } from "../FileService";
 export declare class S3FileService implements FileServiceProvider {
     private readonly _bucketName;
     private static _s3Client;
-    static get s3Client(): any;
+    static readonly s3Client: any;
     constructor(bucketName?: string);
     writeFile(relativePath: string, contents: string | Buffer): Promise<void>;
     readFile(relativePath: string, returnAsBuffer?: boolean): Promise<string | Buffer>;

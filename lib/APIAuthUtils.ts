@@ -2,11 +2,18 @@ import jwt from "jsonwebtoken";
 import isNil from "lodash/isNil";
 import {APIConfig} from "./APIConfig";
 
-export class APIAuthCredentials {
+export class APIAuthUser<T = any> {
+    userID: string;
+    userName: string;
+
+    extraData?:T;
+}
+
+export class APIAuthCredentials extends APIAuthUser {
     isAuthenticated: boolean;
-    userID?: string;
-    userName?: string;
-    expires?: number;
+    isExpired: boolean;
+
+    expires?: Date;
     refreshToken?: string;
 
     rawJWTPayload?: object;
@@ -26,7 +33,10 @@ export class APIAuthUtils {
 
     private static getAuthCredentialsFromJWT(token: string, ignoreExpiration: boolean = true): APIAuthCredentials {
         let authCreds: APIAuthCredentials = {
-            isAuthenticated: false
+            isAuthenticated: false,
+            isExpired: true,
+            userID: null,
+            userName: null
         };
 
         if (!token) {
@@ -39,8 +49,15 @@ export class APIAuthUtils {
             authCreds.userName = decodedAuthToken.u;
             authCreds.userID = decodedAuthToken.i;
             authCreds.refreshToken = decodedAuthToken.r;
-            authCreds.expires = decodedAuthToken.exp / 1000;
+            authCreds.extraData = decodedAuthToken.ext;
             authCreds.rawJWTPayload = decodedAuthToken;
+
+            if(decodedAuthToken.exp)
+            {
+                authCreds.expires = new Date(decodedAuthToken.exp * 1000);
+                authCreds.isExpired = authCreds.expires <= (new Date());
+            }
+
         } catch (err) {
         }
 
@@ -72,7 +89,7 @@ export class APIAuthUtils {
         return APIAuthUtils.getAuthCredentialsFromJWT(APIAuthUtils.getJWTFromRequest(req));
     }
 
-    static createJWT(userID: string, username: string, refreshToken: string, expiresIn: string | number = "1h", extraData: object = {}): string {
+    static createJWT(userID: string, username: string, expiresIn: string | number = "1h", refreshToken?: string, extraData?: object): string {
 
         let options = undefined;
 
@@ -82,11 +99,30 @@ export class APIAuthUtils {
             }
         }
 
-        return jwt.sign({
+        let payload:any = {
             i: userID,
-            u: username,
-            r: refreshToken,
-            ...extraData
-        }, APIConfig.JWT_SECRET, options);
+            u: username
+        };
+
+        if(refreshToken)
+        {
+            payload.r = refreshToken;
+        }
+
+        if(extraData)
+        {
+            payload.ext = extraData;
+        }
+
+        return jwt.sign(payload, APIConfig.JWT_SECRET, options);
+    }
+
+    static getAPIAuthUserFromAuthCredentials<T = any>(authCredentials:APIAuthCredentials):APIAuthUser<T>
+    {
+        return {
+            userID: authCredentials.userID,
+            userName: authCredentials.userName,
+            extraData: authCredentials.extraData
+        };
     }
 }
