@@ -10,7 +10,7 @@ export declare abstract class FileServiceProvider {
 }
 export declare class FileService {
     private static _providerInstance;
-    private static readonly _provider;
+    private static get _provider();
     static copyFile(fromRelativePath: string, toRelativePath: string): Promise<void>;
     static writeFile(relativePath: string, contents: string | Buffer): Promise<void>;
     static readFile(relativePath: string, returnAsBuffer?: boolean): Promise<string | Buffer>;

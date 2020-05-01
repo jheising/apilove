@@ -3,6 +3,8 @@ import getArguments from "function-arguments";
 import {APIConfig} from "./APIConfig";
 import crypto from "crypto";
 import slugify from "slugify";
+import shortid from "shortid";
+import {nanoid} from "nanoid";
 
 slugify.extend({"/": ":"});
 
@@ -10,6 +12,20 @@ export class APIUtils {
 
     static getRawTypeName(obj) {
         return Object.prototype.toString.call(obj).slice(8, -1);
+    }
+
+    static generateShortID()
+    {
+        return shortid.generate();
+    }
+
+    static generateLongID(length?:number)
+    {
+        return nanoid(length);
+    }
+
+    static slugify(text: string) {
+        return slugify(text);
     }
 
     static convertToType(value: any, convertToType: string): any {
@@ -119,10 +135,6 @@ export class APIUtils {
 
         decrypted = Buffer.concat([decrypted, decipher.final()]);
         return decrypted.toString();
-    }
-
-    static slugify(text: string) {
-        return slugify(text);
     }
 
     static hashString(text: string, encoding: string = 'base64') {

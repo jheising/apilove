@@ -1,5 +1,8 @@
 export declare class APIUtils {
     static getRawTypeName(obj: any): any;
+    static generateShortID(): any;
+    static generateLongID(length?: number): string;
+    static slugify(text: string): string;
     static convertToType(value: any, convertToType: string): any;
     static toBoolean(input: any): boolean;
     static coalesce(...inputArgs: any[]): any;
@@ -9,7 +12,6 @@ export declare class APIUtils {
     private static _HASH_ALG;
     static encrypt(text: string, password?: string): string;
     static decrypt(text: string, password?: string): string;
-    static slugify(text: string): string;
     static hashString(text: string, encoding?: string): string;
     static hashMD5(text: string, encoding?: string): string;
     /**
