@@ -73,4 +73,4 @@ export interface APIEndpointOptions {
     requireAuthentication?: boolean;
 }
 export declare function APIEndpoint(options?: APIEndpointOptions): (target: any, key: any, descriptor: any) => void;
-export { APIConfig, APIAuthUtils, APIError, APIResponse, APIUtils, KVService, FileService, EnvVarSync };
+export { APIConfig, APIAuthUtils, APIError, APIResponse, APIUtils, KVService as APIKVService, FileService as APIFileService, EnvVarSync };

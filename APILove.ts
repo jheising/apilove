@@ -395,7 +395,7 @@ export {
     APIError,
     APIResponse,
     APIUtils,
-    KVService,
-    FileService,
+    KVService as APIKVService,
+    FileService as APIFileService,
     EnvVarSync
 };
