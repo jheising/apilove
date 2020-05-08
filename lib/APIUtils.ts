@@ -152,14 +152,19 @@ export class APIUtils {
         let cipher = crypto.createCipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
         let encrypted = cipher.update(text);
 
+        const separator = encoding === "urlsafe" ? "%3A" : ":";
+
         encrypted = Buffer.concat([encrypted, cipher.final()]);
-        return APIUtils.bufferToString(iv, encoding) + ':' + APIUtils.bufferToString(encrypted, encoding);
+        return APIUtils.bufferToString(iv, encoding) + separator + APIUtils.bufferToString(encrypted, encoding);
     }
 
     static decrypt(text: string, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
-        let textParts = text.split(':');
+
+        const separator = encoding === "urlsafe" ? "%3A" : ":";
+
+        let textParts = text.split(separator);
         let iv = APIUtils.stringToBuffer(textParts.shift(), encoding);
-        let encryptedText = APIUtils.stringToBuffer(textParts.join(':'), encoding);
+        let encryptedText = APIUtils.stringToBuffer(textParts.join(separator), encoding);
         let decipher = crypto.createDecipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
         let decrypted = decipher.update(encryptedText);
 
