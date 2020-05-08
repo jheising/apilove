@@ -66,6 +66,9 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
                     else {
                         if (lodash_1.has(paramValues, paramName)) {
                             paramValue = paramValues[paramName];
+                            if (paramSource === "query") {
+                                paramValue = decodeURIComponent(paramValue);
+                            }
                             break;
                         }
                     }
