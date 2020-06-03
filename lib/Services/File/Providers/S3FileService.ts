@@ -20,16 +20,22 @@ export class S3FileService implements FileServiceProvider {
         this._bucketName = bucketName;
     }
 
-    writeFile(relativePath: string, contents: string | Buffer): Promise<void> {
-        let params = {
+    writeFile(relativePath: string, contents: string | Buffer, encrypted:boolean = false): Promise<void> {
+        let params:any = {
             Bucket: this._bucketName,
             Key: relativePath,
             Body: contents
         };
+
+        if(encrypted)
+        {
+            params.ServerSideEncryption = "AES256";
+        }
+
         return S3FileService.s3Client.putObject(params).promise();
     }
 
-    readFile(relativePath: string, returnAsBuffer:boolean = false): Promise<string | Buffer> {
+    readFile(relativePath: string, returnAsBuffer:boolean = false, encrypted:boolean = false): Promise<string | Buffer> {
         let params = {
             Bucket: this._bucketName,
             Key: relativePath

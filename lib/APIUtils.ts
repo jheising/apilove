@@ -5,7 +5,8 @@ import crypto from "crypto";
 import slugify from "slugify";
 import shortid from "shortid";
 import {nanoid} from "nanoid";
-import { encode, decode } from "safe-base64";
+import {encode, decode} from "safe-base64";
+import isBuffer from "lodash/isBuffer";
 
 slugify.extend({"/": ":"});
 
@@ -17,13 +18,11 @@ export class APIUtils {
         return Object.prototype.toString.call(obj).slice(8, -1);
     }
 
-    static generateShortID()
-    {
+    static generateShortID() {
         return shortid.generate();
     }
 
-    static generateLongID(length?:number)
-    {
+    static generateLongID(length?: number) {
         return nanoid(length);
     }
 
@@ -117,40 +116,34 @@ export class APIUtils {
     private static _CRYPTO_ALG = 'aes-256-cbc';
     private static _HASH_ALG = 'sha256';
 
-    static bufferToString(buffer:Buffer, encoding: APIUtilsEncoding):string
-    {
+    static bufferToString(buffer: Buffer, encoding: APIUtilsEncoding): string {
         switch (encoding) {
-            case "urlsafe":
-            {
+            case "urlsafe": {
                 return encode(buffer);
             }
-            default:
-            {
+            default: {
                 return buffer.toString(encoding);
             }
         }
     }
 
-    static stringToBuffer(theString:string, encoding: APIUtilsEncoding):Buffer
-    {
+    static stringToBuffer(theString: string, encoding: APIUtilsEncoding): Buffer {
         switch (encoding) {
-            case "urlsafe":
-            {
+            case "urlsafe": {
                 return decode(theString);
             }
-            default:
-            {
+            default: {
                 return Buffer.from(theString, encoding);
             }
         }
     }
 
-    static encrypt(text: string, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
+    static encrypt(content: string | Buffer, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
         password = padEnd(password, 32, "0");
 
         let iv = crypto.randomBytes(this._IV_LENGTH);
         let cipher = crypto.createCipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
-        let encrypted = cipher.update(text);
+        let encrypted = cipher.update(content);
 
         const separator = encoding === "urlsafe" ? "%3A" : ":";
 
@@ -158,11 +151,16 @@ export class APIUtils {
         return APIUtils.bufferToString(iv, encoding) + separator + APIUtils.bufferToString(encrypted, encoding);
     }
 
-    static decrypt(text: string, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
+    static decrypt(content: string | Buffer, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
 
         const separator = encoding === "urlsafe" ? "%3A" : ":";
 
-        let textParts = text.split(separator);
+        if(isBuffer(content))
+        {
+            content = (content as Buffer).toString("utf8");
+        }
+
+        let textParts = (content as string).split(separator);
         let iv = APIUtils.stringToBuffer(textParts.shift(), encoding);
         let encryptedText = APIUtils.stringToBuffer(textParts.join(separator), encoding);
         let decipher = crypto.createDecipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);

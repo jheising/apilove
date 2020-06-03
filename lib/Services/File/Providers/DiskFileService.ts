@@ -5,6 +5,8 @@ import fs from "fs-extra";
 import {each} from "async";
 import util from "util";
 import {APIError} from "../../../APIError";
+import isString from "lodash/isString";
+import {APIUtils} from "../../../APIUtils";
 
 export class DiskFileService implements FileServiceProvider {
     private readonly _rootPath: string;
@@ -27,13 +29,26 @@ export class DiskFileService implements FileServiceProvider {
         return Promise.resolve();
     }
 
-    writeFile(relativePath: string, contents: string | Buffer): Promise<void> {
+    writeFile(relativePath: string, contents: string | Buffer, encrypted:boolean = false): Promise<void> {
+
+        if(encrypted)
+        {
+            throw new Error("Encryption not supported");
+        }
+
         let filePath = path.join(this._rootPath, relativePath);
+
         return this._isInvalidFilePath(filePath)
             .then(() => util.promisify(fs.outputFile)(filePath, contents));
     }
 
-    readFile(relativePath: string, returnAsBuffer:boolean): Promise<string | Buffer> {
+    readFile(relativePath: string, returnAsBuffer:boolean, encrypted:boolean = false): Promise<string | Buffer> {
+
+        if(encrypted)
+        {
+            throw new Error("Encryption not supported");
+        }
+
         let filePath = path.join(this._rootPath, relativePath);
         return this._isInvalidFilePath(filePath)
             .then(() => util.promisify(fs.readFile)(filePath))

@@ -14,8 +14,8 @@ export declare class APIUtils {
     private static _HASH_ALG;
     static bufferToString(buffer: Buffer, encoding: APIUtilsEncoding): string;
     static stringToBuffer(theString: string, encoding: APIUtilsEncoding): Buffer;
-    static encrypt(text: string, password?: string, encoding?: APIUtilsEncoding): string;
-    static decrypt(text: string, password?: string, encoding?: APIUtilsEncoding): string;
+    static encrypt(content: string | Buffer, password?: string, encoding?: APIUtilsEncoding): string;
+    static decrypt(content: string | Buffer, password?: string, encoding?: APIUtilsEncoding): string;
     static hashString(text: string, encoding?: APIUtilsEncoding): string;
     static hashMD5(text: string, encoding?: APIUtilsEncoding): string;
     /**
