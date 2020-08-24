@@ -3,28 +3,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.EnvVarSync = exports.APIFileService = exports.APIKVService = exports.APIUtils = exports.APIResponse = exports.APIError = exports.APIAuthUtils = exports.APIConfig = exports.APIEndpoint = exports.APIParameter = exports.APILove = void 0;
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const lodash_1 = require("lodash");
 const APIConfig_1 = require("./lib/APIConfig");
-exports.APIConfig = APIConfig_1.APIConfig;
+Object.defineProperty(exports, "APIConfig", { enumerable: true, get: function () { return APIConfig_1.APIConfig; } });
 const path_1 = __importDefault(require("path"));
 const APIUtils_1 = require("./lib/APIUtils");
-exports.APIUtils = APIUtils_1.APIUtils;
+Object.defineProperty(exports, "APIUtils", { enumerable: true, get: function () { return APIUtils_1.APIUtils; } });
 require("reflect-metadata");
 const APIResponse_1 = require("./lib/APIResponse");
-exports.APIResponse = APIResponse_1.APIResponse;
+Object.defineProperty(exports, "APIResponse", { enumerable: true, get: function () { return APIResponse_1.APIResponse; } });
 const APIError_1 = require("./lib/APIError");
-exports.APIError = APIError_1.APIError;
+Object.defineProperty(exports, "APIError", { enumerable: true, get: function () { return APIError_1.APIError; } });
 const KVService_1 = require("./lib/Services/KeyValue/KVService");
-exports.APIKVService = KVService_1.KVService;
+Object.defineProperty(exports, "APIKVService", { enumerable: true, get: function () { return KVService_1.KVService; } });
 const FileService_1 = require("./lib/Services/File/FileService");
-exports.APIFileService = FileService_1.FileService;
+Object.defineProperty(exports, "APIFileService", { enumerable: true, get: function () { return FileService_1.FileService; } });
 const Config_1 = require("./lib/Services/Config");
-exports.EnvVarSync = Config_1.EnvVarSync;
+Object.defineProperty(exports, "EnvVarSync", { enumerable: true, get: function () { return Config_1.EnvVarSync; } });
 const APIAuthUtils_1 = require("./lib/APIAuthUtils");
-exports.APIAuthUtils = APIAuthUtils_1.APIAuthUtils;
+Object.defineProperty(exports, "APIAuthUtils", { enumerable: true, get: function () { return APIAuthUtils_1.APIAuthUtils; } });
 function _createHandlerWrapperFunction(handlerData, thisObject) {
     return (req, res, next) => {
         let apiResponse = new APIResponse_1.APIResponse(req, res, next);

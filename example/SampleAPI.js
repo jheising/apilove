@@ -12,6 +12,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SampleAPI = void 0;
 const APILove_1 = require("../APILove");
 class SampleAPI {
     constructor() {
