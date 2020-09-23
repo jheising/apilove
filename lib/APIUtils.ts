@@ -44,8 +44,14 @@ export class APIUtils {
             return value;
         }
 
-        // Objects and Arrays can only be converted to JSON strings
+        // Objects and Arrays can only be converted to themselves or to JSON strings
         if (rawValueType === "Object" || rawValueType === "Array") {
+
+            if(convertToType === "Object" || convertToType === "Array")
+            {
+                return value;
+            }
+
             if (convertToType === "String") {
                 try {
                     return JSON.stringify(value);
