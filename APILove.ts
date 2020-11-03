@@ -102,12 +102,6 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
                     } else {
                         if (has(paramValues, paramName)) {
                             paramValue = paramValues[paramName];
-
-                            if(paramSource === "query")
-                            {
-                                paramValue = decodeURIComponent(paramValue);
-                            }
-
                             break;
                         }
                     }
