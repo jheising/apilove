@@ -158,6 +158,7 @@ export class APIUtils {
     }
 
     static decrypt(content: string | Buffer, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
+        password = padEnd(password, 32, "0");
 
         const separator = ":";
 
