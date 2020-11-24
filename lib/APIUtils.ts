@@ -169,7 +169,7 @@ export class APIUtils {
 
         let textParts = (content as string).split(separator);
 
-        if(!textParts)
+        if(!textParts || textParts.length === 0)
         {
             textParts = (content as string).split(":"); // Support for older implementations where : was used.
         }
