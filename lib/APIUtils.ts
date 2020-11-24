@@ -151,7 +151,7 @@ export class APIUtils {
         let cipher = crypto.createCipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
         let encrypted = cipher.update(content);
 
-        const separator = ":";
+        const separator = "~";
 
         encrypted = Buffer.concat([encrypted, cipher.final()]);
         return APIUtils.bufferToString(iv, encoding) + separator + APIUtils.bufferToString(encrypted, encoding);
@@ -160,7 +160,7 @@ export class APIUtils {
     static decrypt(content: string | Buffer, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
         password = padEnd(password, 32, "0");
 
-        const separator = ":";
+        const separator = "~";
 
         if(isBuffer(content))
         {
@@ -168,6 +168,12 @@ export class APIUtils {
         }
 
         let textParts = (content as string).split(separator);
+
+        if(!textParts)
+        {
+            textParts = (content as string).split(":"); // Support for older implementations where : was used.
+        }
+
         let iv = APIUtils.stringToBuffer(textParts.shift(), encoding);
         let encryptedText = APIUtils.stringToBuffer(textParts.join(separator), encoding);
         let decipher = crypto.createDecipheriv(this._CRYPTO_ALG, Buffer.from(password), iv);
