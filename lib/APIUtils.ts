@@ -160,7 +160,7 @@ export class APIUtils {
     static decrypt(content: string | Buffer, password: string = APIConfig.ENCRYPTION_SECRET, encoding: APIUtilsEncoding = 'base64') {
         password = padEnd(password, 32, "0");
 
-        const separator = "~";
+        let separator = "~";
 
         if(isBuffer(content))
         {
@@ -171,7 +171,8 @@ export class APIUtils {
 
         if(!textParts || textParts.length === 0)
         {
-            textParts = (content as string).split(":"); // Support for older implementations where : was used.
+            separator = ":";
+            textParts = (content as string).split(separator); // Support for older implementations where : was used.
         }
 
         let iv = APIUtils.stringToBuffer(textParts.shift(), encoding);
