@@ -1,7 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import {get, isNil, set, defaultsDeep, each, castArray, has, isNaN} from "lodash";
+import {get, isNil, set, defaultsDeep, each, castArray, has, isNaN, isArray} from "lodash";
 import {APIConfig} from "./lib/APIConfig";
 import path from "path";
 import {APIUtils} from "./lib/APIUtils";
@@ -102,6 +102,13 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
                     } else {
                         if (has(paramValues, paramName)) {
                             paramValue = paramValues[paramName];
+
+                            // Support for Multi value headers and params
+                            if((paramSource === "headers" || paramSource === "query") && isArray(paramValue) && paramValue.length === 1)
+                            {
+                                paramValue = paramValue[0];
+                            }
+
                             break;
                         }
                     }

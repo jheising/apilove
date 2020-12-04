@@ -67,6 +67,10 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
                     else {
                         if (lodash_1.has(paramValues, paramName)) {
                             paramValue = paramValues[paramName];
+                            // Support for Multi value headers and params
+                            if ((paramSource === "headers" || paramSource === "query") && lodash_1.isArray(paramValue) && paramValue.length === 1) {
+                                paramValue = paramValue[0];
+                            }
                             break;
                         }
                     }
