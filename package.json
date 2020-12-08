@@ -41,7 +41,7 @@
     "nanoid": "^3.1.3",
     "reflect-metadata": "^0.1.12",
     "safe-base64": "^2.0.1-0",
-    "serverless-http": "git+ssh://git@github.com:internet-co/serverless-http.git",
+    "serverless-http": "git+ssh://git@github.com/internet-co/serverless-http.git",
     "shortid": "^2.2.13",
     "slugify": "^1.3.1"
   }
