@@ -115,7 +115,11 @@ export class APIUtils {
     }
 
     static getFunctionParamNames(fn: Function): string[] {
-        return getArguments(fn);
+        const args:string[] = getArguments(fn);
+
+        return args.map(arg => {
+            return arg.replace(/\s*[=].*$/, ""); // Remove any initializers
+        });
     }
 
     private static _IV_LENGTH = 16;
