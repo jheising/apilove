@@ -1,3 +1,4 @@
+// @ts-ignore
 import {APILove} from "apilove";
 
 // This is the only part that is required.

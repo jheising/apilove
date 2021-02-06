@@ -35,7 +35,7 @@ export class DiskKVService extends KVServiceProvider {
     }
 
     private _getValue(namespace: string, key: string): Promise<{ value: any, expires: number }> {
-        return DiskKVService._fileService.readFile(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`).then((fileContents) => {
+        return DiskKVService._fileService.readFile(`${APIUtils.slugify(namespace)}/${APIUtils.slugify(key)}.json`, false).then((fileContents:string) => {
             let data = JSON.parse(fileContents);
             return Promise.resolve(data);
         }).catch(() => {
@@ -93,7 +93,7 @@ export class DiskKVService extends KVServiceProvider {
             for(let index = startIndex; index <= endIndex; index++)
             {
                 let filename = files[index];
-                actions.push(DiskKVService._fileService.readFile(`${APIUtils.slugify(namespace)}/${filename}`));
+                actions.push(DiskKVService._fileService.readFile(`${APIUtils.slugify(namespace)}/${filename}`, false));
             }
 
             let results = await Promise.all(actions);

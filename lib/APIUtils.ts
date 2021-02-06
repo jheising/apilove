@@ -1,4 +1,5 @@
 import {isBoolean, isNil, toString, castArray, toNumber, isString, padEnd} from "lodash";
+// @ts-ignore
 import getArguments from "function-arguments";
 import {APIConfig} from "./APIConfig";
 import crypto from "crypto";
