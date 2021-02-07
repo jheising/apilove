@@ -59,7 +59,7 @@ export class APIError {
     private static _rawErrorOut(error: Error) {
 
         let errorData: any = {
-            "error": error.toString()
+            "error": error.message
         };
 
         let stack = error.stack;
