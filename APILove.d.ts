@@ -9,7 +9,7 @@ import { EnvVarSync } from "./lib/Services/Config";
 import { APIAuthUtils } from "./lib/APIAuthUtils";
 export interface APILoaderDefinition {
     apiPath?: string;
-    require: string;
+    require: string | (() => any);
     moduleName?: string;
 }
 export interface APILoveOptions {

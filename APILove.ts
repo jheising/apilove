@@ -1,7 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import {get, isNil, set, defaultsDeep, each, castArray, has, isNaN} from "lodash";
+import {get, isNil, set, defaultsDeep, each, castArray, has, isNaN, isFunction} from "lodash";
 import {APIConfig} from "./lib/APIConfig";
 import path from "path";
 import {APIUtils} from "./lib/APIUtils";
@@ -30,7 +30,7 @@ interface HandlerData {
 
 export interface APILoaderDefinition {
     apiPath?: string;
-    require: string;
+    require: string | (() => any);
     moduleName?: string;
 }
 
@@ -160,20 +160,26 @@ function _createHandlerWrapperFunction(handlerData: HandlerData, thisObject) {
 
 function _loadAPI(apiRouter, apiDefinition: APILoaderDefinition) {
 
-    let apiModule;
-    try {
-        apiModule = require(path.resolve(process.cwd(), apiDefinition.require));
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
+    let apiClass;
 
-    if (isNil(apiModule)) {
-        return null;
-    }
+    if (isFunction(apiDefinition.require)) {
+        apiClass = apiDefinition.require();
+    } else {
+        let apiModule;
+        try {
+            apiModule = require(path.resolve(process.cwd(), apiDefinition.require));
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
 
-    let moduleName = APIUtils.coalesce(apiDefinition.moduleName, path.basename(apiDefinition.require));
-    let apiClass = APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
+        if (isNil(apiModule)) {
+            return null;
+        }
+
+        let moduleName = APIUtils.coalesce(apiDefinition.moduleName, path.basename(apiDefinition.require));
+        apiClass = APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
+    }
 
     let apiInstance;
 

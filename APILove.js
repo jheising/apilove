@@ -114,19 +114,25 @@ function _createHandlerWrapperFunction(handlerData, thisObject) {
     };
 }
 function _loadAPI(apiRouter, apiDefinition) {
-    let apiModule;
-    try {
-        apiModule = require(path_1.default.resolve(process.cwd(), apiDefinition.require));
+    let apiClass;
+    if (lodash_1.isFunction(apiDefinition.require)) {
+        apiClass = apiDefinition.require();
     }
-    catch (e) {
-        console.error(e);
-        return null;
+    else {
+        let apiModule;
+        try {
+            apiModule = require(path_1.default.resolve(process.cwd(), apiDefinition.require));
+        }
+        catch (e) {
+            console.error(e);
+            return null;
+        }
+        if (lodash_1.isNil(apiModule)) {
+            return null;
+        }
+        let moduleName = APIUtils_1.APIUtils.coalesce(apiDefinition.moduleName, path_1.default.basename(apiDefinition.require));
+        apiClass = APIUtils_1.APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
     }
-    if (lodash_1.isNil(apiModule)) {
-        return null;
-    }
-    let moduleName = APIUtils_1.APIUtils.coalesce(apiDefinition.moduleName, path_1.default.basename(apiDefinition.require));
-    let apiClass = APIUtils_1.APIUtils.coalesce(apiModule[moduleName], apiModule.default, apiModule);
     let apiInstance;
     lodash_1.each(lodash_1.get(apiClass, "__handlerData", {}), (handlerData, name) => {
         // If this is an instance function, we need to create an instance of the class
