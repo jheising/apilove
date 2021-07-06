@@ -67,7 +67,7 @@ export class APIResponse {
 
         if ((apiError.statusCode >= 500 && apiError.statusCode <= 599 && APIConfig.LOG_500_ERRORS) ||
             (apiError.statusCode >= 400 && apiError.statusCode <= 499 && APIConfig.LOG_400_ERRORS)) {
-            console.error(JSON.stringify(apiError.out(true)));
+            console.error(apiError.out(true).error);
         }
 
         if (this.next) {

@@ -16,8 +16,7 @@ export class APIError {
         if (get(rawError, "isAPIFriendly", false)) {
             this.friendlyMessage = (<any>rawError).message;
             this.statusCode = (<any>rawError).statusCode;
-        }
-        else {
+        } else {
             this.friendlyMessage = friendlyMessage;
             this.statusCode = statusCode;
         }
@@ -59,17 +58,18 @@ export class APIError {
     private static _rawErrorOut(error: Error) {
 
         let errorData: any = {
-            "error": error
+            "name": error.name,
+            "message": error.message
         };
 
         let stack = error.stack;
         if (stack) {
             errorData.stack = stack.split('\n').map(function (line) {
                 return line.trim();
-            }).slice(1);
+            });
         }
 
-        return errorData
+        return errorData;
     }
 
     out(includeRawError: boolean = APIConfig.DISPLAY_RAW_ERRORS) {
