@@ -217,7 +217,7 @@ export class APILove {
             this.app.use(bodyParser.urlencoded({limit: "50mb", extended: false, parameterLimit: 50000}));
             this.app.use(bodyParser.text({limit: "50mb"}));
             this.app.use((req, res, next) => {
-                req.auth = APIAuthUtils.getAuthCredentialsFromRequest(req, true);
+                (req as any).auth = APIAuthUtils.getAuthCredentialsFromRequest(req, true);
                 next();
             });
         }
