@@ -44,7 +44,7 @@ export class APIAuthUtils {
         }
 
         try {
-            const decodedAuthToken = jwt.verify(token, APIConfig.JWT_SECRET, {ignoreExpiration});
+            const decodedAuthToken = jwt.verify(token, APIConfig.JWT_SECRET, {ignoreExpiration}) as jwt.JwtPayload;
             authCreds.isAuthenticated = true;
             authCreds.userName = decodedAuthToken.u;
             authCreds.userID = decodedAuthToken.i;
